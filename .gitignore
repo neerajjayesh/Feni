@@ -1,0 +1,13 @@
+build*/
+runtime/
+backups/
+.tools/
+__pycache__/
+*.pyc
+*.bin
+*.elf
+*.map
+secrets.h
+.env*
+.clasp.json
+CONNECTION.md
