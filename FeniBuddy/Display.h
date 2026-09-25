@@ -61,17 +61,19 @@ void eventCard(const Event &event,bool alert,bool meeting=false) {
   footer(!calendarFresh()?"Cached / Double back":running?"Time left / Double back":alert?"Double tap to go back":"Tap next / Double back");
 }
 
+bool buddyFaceVisible=false;
+uint32_t buddyFaceAt=0;
 void renderUi(uint32_t now) {
-  static uint32_t lastFrame=0,nextMood=0;static bool faceWasVisible=false;
+  static uint32_t lastFrame=0,nextMood=0;
   if(now-lastFrame<40)return;lastFrame=now;
-  bool face=ui.page==buddy::Page::Home && ui.online && !ui.showClock() && !ui.showMeeting() && !ui.timerDone && !ui.reminder;
+  bool face=ui.page==buddy::Page::Home && (ui.online || ui.idleBuddy) && !ui.showClock() && !ui.showMeeting() && !ui.timerDone && !ui.reminder;
   canvas.palette(buddy::accent(ui.theme),face);
   if(face){
-    if(!faceWasVisible){canvas.clearDisplay();eyes.open();eyes.blink();}
+    if(!buddyFaceVisible){buddyFaceAt=now;canvas.clearDisplay();eyes.open();eyes.blink();}
     if(int32_t(now-nextMood)>=0){eyes.setMood(random(4)==0?HAPPY:DEFAULT);nextMood=now+random(7000,15000);}
-    faceWasVisible=true;eyes.update();frameContainsPassword=false;return;
+    buddyFaceVisible=true;eyes.update();frameContainsPassword=false;return;
   }
-  faceWasVisible=false;canvas.clearDisplay();frameContainsPassword=ui.page==buddy::Page::WifiPassword;
+  buddyFaceVisible=false;canvas.clearDisplay();frameContainsPassword=ui.page==buddy::Page::WifiPassword;
   if(ui.timerDone){canvas.fillRect(4,29,152,63,2);canvas.center(43,"TIME IS UP",2,0);footer("Double tap to go back");}
   else if(ui.reminder)eventCard(reminderEvent,true);
   else if(ui.page==buddy::Page::Home){if(ui.showClock())clockScreen();else if(ui.showMeeting() && meetingIndex>=0)eventCard(events[meetingIndex],false,true);else setupScreen();}

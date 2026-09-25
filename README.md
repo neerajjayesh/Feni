@@ -3,7 +3,7 @@
 An ESP8266 desk companion with a 1.8-inch TFT: a centered animated face, clock,
 Google Calendar reminders, countdown timers, and WLED preset control.
 
-**Current firmware: v3.2.1.** The original working baseline is tagged `v3.1.1`. Designed for a NodeMCU ESP8266 and an ST7735
+**Current firmware: v3.2.2.** The original working baseline is tagged `v3.1.1`. Designed for a NodeMCU ESP8266 and an ST7735
 128 x 160 SPI display, used in landscape at 160 x 128.
 
 ## Components
@@ -49,6 +49,7 @@ variants may need changes in [Hardware.h](FeniBuddy/Hardware.h).
 
 - Centered RoboEyes animations and Buddy / Clock / Auto display modes.
 - In Auto, a tap shows the clock for ten seconds. The clock remains white.
+- After 60 seconds without input, any screen returns to the face; timers continue.
 - Cyan, Orange, Green and Purple accent themes, including the eyes.
 - Larger, bold FreeSans text and filled rectangular menu selections.
 - NTP clock, default India timezone, with manual time sync in the local page.

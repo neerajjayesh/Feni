@@ -36,6 +36,7 @@ void updateMeeting() {
   if(next<0) { meetingId[0]=0;meetingStart=0;ui.meetingDismissed=false; }
   else if(strcmp(meetingId,events[next].id) || meetingStart!=events[next].start) {
     strlcpy(meetingId,events[next].id,sizeof(meetingId));meetingStart=events[next].start;ui.meetingDismissed=false;
+    ui.wakeForMeeting(millis());
   }
   meetingIndex=next;ui.meetingActive=next>=0;
 }

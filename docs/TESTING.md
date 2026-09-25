@@ -78,3 +78,17 @@ The normal build rejected the development-only meeting command. Cyan was restore
 Restored bold FreeSans fonts and verified the menu, clock and Calendar card on
 the TFT framebuffer after flashing. The clock remained white, saved theme/mode
 and connections were preserved, and live Calendar sync returned three events.
+
+## v3.2.2 inactivity return
+
+All 264 control checks passed, including every page's idle cutoff, held input,
+timer continuation, new meeting wake-up and millisecond counter rollover. The
+WLED, persistence, face, HTTP body, meeting and Calendar/browser suites also passed.
+
+The production firmware was flashed and exercised through local HTTP controls.
+With status polling every second, a tap at 30 seconds restarted the deadline.
+The board entered idle at 60.012 seconds after that input; the next status read
+observed it at 60.064 seconds. A running ten-minute timer continued behind the
+face, and a tap reopened the white clock. The test-created timer was cancelled,
+the original mode restored, and theme and Wi-Fi settings were preserved.
+Calendar HTTPS sync succeeded afterward. Physical presses were not automated.

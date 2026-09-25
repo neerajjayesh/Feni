@@ -81,8 +81,8 @@ void timersAndOverlays() {
   CHECK(ui.secondsLeft(1001)==600);CHECK(ui.secondsLeft(2000)==599);
   ui.handle(Gesture::DoubleTap,2100);CHECK(ui.page==Page::Menu);CHECK(ui.timerRunning);
   ui.update(600999);CHECK(!ui.timerDone);ui.update(601000);CHECK(ui.timerDone);CHECK(!ui.timerRunning);
-  ui.handle(Gesture::DoubleTap,602000);CHECK(!ui.timerDone);CHECK(ui.page==Page::Menu);
-  ui.reminder=true;ui.handle(Gesture::DoubleTap,603000);CHECK(!ui.reminder);CHECK(ui.page==Page::Menu);
+  ui.handle(Gesture::DoubleTap,602000);CHECK(!ui.timerDone);CHECK(ui.page==Page::Home);
+  ui.reminder=true;ui.handle(Gesture::DoubleTap,603000);CHECK(!ui.reminder);CHECK(ui.page==Page::Home);
   ui.reminder=true;ui.timerDone=true;ui.handle(Gesture::DoubleTap,604000);CHECK(!ui.timerDone);CHECK(ui.reminder);
   ui.handle(Gesture::DoubleTap,605000);CHECK(!ui.reminder);
   for(unsigned choice=0;choice<3;++choice) {
@@ -149,4 +149,30 @@ void wifiSettings() {
   ui.back();CHECK(ui.showMeeting());ui.mode=Mode::Clock;CHECK(!ui.showMeeting());
 }
 
-int main() {controls();menus();timersAndOverlays();customTimer();wifiSettings();printf("PASS: %u control, navigation, timer, and settings checks\n",checks);}
+void inactivity() {
+  for(int page=0;page<=int(Page::Colours);++page) {
+    Ui ui;ui.online=true;ui.mode=Mode::Clock;ui.page=static_cast<Page>(page);ui.choice=1;
+    ui.noteActivity(1000);ui.passwordAt=1000;
+    ui.update(60999);CHECK(!ui.idleBuddy);
+    ui.update(61000);CHECK(ui.idleBuddy && ui.page==Page::Home && !ui.showClock() && !ui.showMeeting());
+    CHECK(ui.idleEnteredAt-ui.activityAt==Ui::IdleTimeout);
+    CHECK(ui.mode==Mode::Clock && !ui.modeChanged && !ui.forgetRequested && ui.requestedPreset==-1);
+    ui.handle(Gesture::Tap,62000);CHECK(!ui.idleBuddy && ui.showClock());
+  }
+  Ui held;held.page=Page::Menu;held.noteActivity(59000);held.update(118999);CHECK(held.page==Page::Menu);
+  held.noteActivity(118999);held.update(178998);CHECK(!held.idleBuddy);held.update(178999);CHECK(held.idleBuddy);
+  Ui timer;timer.page=Page::Timers;timer.handle(Gesture::Hold,1000);timer.update(61000);
+  CHECK(timer.idleBuddy && timer.timerRunning && timer.secondsLeft(61000)==540);
+  timer.update(601000);CHECK(timer.timerDone && timer.idleBuddy); // Later alarms still show.
+  timer.update(616000);CHECK(!timer.timerDone && timer.idleBuddy);
+  Ui meeting;meeting.online=true;meeting.meetingActive=true;meeting.update(60000);CHECK(!meeting.showMeeting());
+  meeting.wakeForMeeting(70000);CHECK(meeting.showMeeting());meeting.update(129999);CHECK(meeting.showMeeting());
+  meeting.update(130000);CHECK(!meeting.showMeeting() && meeting.idleBuddy);
+  meeting.page=Page::Settings;meeting.noteActivity(140000);meeting.wakeForMeeting(199000);meeting.update(200000);
+  CHECK(meeting.idleBuddy); // Automatic events cannot extend a menu session.
+  Ui wrapped;wrapped.noteActivity(0xfffffff0UL);wrapped.page=Page::Wled;
+  wrapped.update(uint32_t(0xfffffff0UL+59999));CHECK(!wrapped.idleBuddy);
+  wrapped.update(uint32_t(0xfffffff0UL+60000));CHECK(wrapped.idleBuddy && wrapped.page==Page::Home);
+  wrapped.handle(Gesture::None,200000);CHECK(wrapped.idleBuddy); // Background polling is not input.
+}
+int main() {controls();menus();timersAndOverlays();customTimer();wifiSettings();inactivity();printf("PASS: %u control, navigation, timer, and settings checks\n",checks);}

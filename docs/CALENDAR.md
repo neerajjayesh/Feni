@@ -36,8 +36,10 @@ ten minutes before and at their start. All-day entries do not trigger a midnight
 reminder or a meeting timer. During a timed event, Feni shows its name and
 remaining time; see [meeting controls](USAGE.md#meeting-countdowns). Stale cached data is marked and does not generate new reminders.
 
-Feni normally checks every two minutes while at Home or on the running-timer
-screen. A long menu session or loss of internet can delay updates. The cached
+Feni normally checks every two minutes while the buddy face is visible. Clock,
+meeting and menu screens defer HTTPS work to keep their display responsive. The
+one-minute idle return provides a sync window while timers keep running.
+Continued interaction or loss of internet can delay updates. The cached
 events disappear on reboot and are fetched again after the connection returns.
 
 ## Updating the bridge

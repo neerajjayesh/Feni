@@ -1,5 +1,13 @@
 # Changelog
 
+## 3.2.2
+
+- Return to the buddy face after 60 seconds without button or web-control activity.
+- Keep timers running and preserve saved mode/theme and network settings.
+- Keep passive web polling from preventing the timeout; allow new alerts to appear.
+- Defer Calendar HTTPS requests until the buddy face is visible to avoid delaying countdown redraws.
+- Retain the v3.2.1 bold Calendar layout.
+
 ## 3.2.1
 
 - Restore bold FreeSans fonts throughout the UI, retaining the current Calendar cards, colours and layout.

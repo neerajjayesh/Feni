@@ -45,7 +45,7 @@ void sampleControls() {
   uint32_t now=millis();
   bool active=(TOUCH_ENABLED && digitalRead(TOUCH_PIN)==(TOUCH_ACTIVE_HIGH ? HIGH : LOW)) || digitalRead(FLASH_BUTTON)==LOW;
   buddy::Gesture gesture=touch.poll(active,now);
-  if(gesture!=buddy::Gesture::None || active) lastInputAt=now;
+  if(gesture!=buddy::Gesture::None || active) {lastInputAt=now;ui.noteActivity(now);}
   ui.handle(gesture,now); ui.update(now);
 }
 
@@ -71,7 +71,7 @@ void setup() {
   // It runs at network yields as well, retaining gestures during HTTPS requests.
   if(!schedule_recurrent_function_us([](){ sampleControls();return true; },10000))
     Serial.println(F("Warning: background input sampler unavailable"));
-  Serial.println(F("FeniBuddy 3.2.1 ready. STATUS for diagnostics."));
+  Serial.println(F("FeniBuddy 3.2.2 ready. STATUS for diagnostics."));
 }
 
 void loop() {
@@ -101,8 +101,10 @@ void loop() {
     int selected=ui.requestedPreset;ui.requestedPreset=-1;applyWledPreset(selected);
   }
   pollWledVerification();
-  // Minute timers must not starve Calendar sync; the input sampler keeps time during HTTPS.
-  if((ui.page==buddy::Page::Home || (ui.page==buddy::Page::Timers && ui.timerRunning)) && !ui.timerDone && !ui.reminder &&
+  // HTTPS can block drawing. Sync on the face after its entry animation settles;
+  // the idle return provides a sync window even during long-running timers.
+  if(ui.page==buddy::Page::Home && buddyFaceVisible && millis()-buddyFaceAt>=1000 &&
+     !ui.showClock() && !ui.showMeeting() && !ui.timerDone && !ui.reminder &&
      !ui.peek && !wledVerifyPending && millis()-lastInputAt>5000 && !touch.down && !touch.pending) pollCalendar();
   yield();
 }

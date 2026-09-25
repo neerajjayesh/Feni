@@ -27,7 +27,7 @@ def request(board, command, timeout=4):
                 state = json.loads(line)
             except ValueError:
                 continue
-            if state.get('firmware') != 'feni-buddy-3.2.1':
+            if state.get('firmware') != 'feni-buddy-3.2.2':
                 raise RuntimeError('Unexpected firmware: ' + str(state.get('firmware')))
             return state
         if command != 'STATUS' and line == 'OK':

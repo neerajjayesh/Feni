@@ -56,12 +56,22 @@ struct Ui {
   bool forgetRequested = false, customInvalid = false;
   uint8_t theme = 0;
   bool themeChanged = false, meetingActive = false, meetingDismissed = false;
+  static constexpr uint32_t IdleTimeout = 60000;
+  bool idleBuddy = false;
+  uint32_t activityAt = 0, idleEnteredAt = 0;
   uint16_t customMinutes = 25;
   uint8_t customField = 0;
   int8_t requestedPreset = -1;
   uint32_t peekAt = 0, timerAt = 0, timerLength = 0, doneAt = 0, passwordAt = 0;
 
+  void noteActivity(uint32_t now) { activityAt=now;idleBuddy=false; }
+  // A newly starting meeting gets one viewing window even if Feni was already idle.
+  void wakeForMeeting(uint32_t now) { if(page==Page::Home && mode!=Mode::Clock) noteActivity(now); }
   void update(uint32_t now) {
+    if(!idleBuddy && uint32_t(now-activityAt)>=IdleTimeout) {
+      page=Page::Home;choice=0;peek=false;idleBuddy=true;idleEnteredAt=now;
+      reminder=false;timerDone=false;customInvalid=false;
+    }
     if (peek && now - peekAt >= 10000) peek = false;
     if (timerRunning && now - timerAt >= timerLength) {
       timerRunning = false; timerDone = true; doneAt = now;
@@ -79,8 +89,8 @@ struct Ui {
     uint32_t elapsed = now - timerAt;
     return timerRunning && elapsed < timerLength ? (timerLength - elapsed + 999) / 1000 : 0;
   }
-  bool showClock() const { return page == Page::Home && (peek || (online && mode == Mode::Clock)); }
-  bool showMeeting() const { return page == Page::Home && meetingActive && !meetingDismissed && !showClock(); }
+  bool showClock() const { return !idleBuddy && page == Page::Home && (peek || (online && mode == Mode::Clock)); }
+  bool showMeeting() const { return !idleBuddy && page == Page::Home && meetingActive && !meetingDismissed && !showClock(); }
   void back() {
     if (timerDone) { timerDone = false; return; }
     if (reminder) { reminder = false; return; }
@@ -97,6 +107,7 @@ struct Ui {
   }
   void handle(Gesture gesture, uint32_t now) {
     if (gesture == Gesture::None) return;
+    noteActivity(now);
     if (gesture == Gesture::DoubleTap) { back(); return; }
     if (timerDone) { timerDone = false; return; }
     if (reminder) { reminder = false; return; }

@@ -11,7 +11,7 @@ to distinguish a double tap. A hold triggers at about 900 ms.
 | WLED MODE | Tap through favorite presets; hold applies one. |
 | SETTINGS | Wi-Fi submenu and Accent Colours. |
 
-The current release is v3.2.1. Larger menus show three filled rectangular rows;
+The current release is v3.2.2. Larger menus show three filled rectangular rows;
 tap scrolls through all choices while keeping the selected row visible.
 
 ## Accent colours
@@ -47,7 +47,7 @@ for up to 15 seconds. An active timer does not survive power loss.
 ## Clock
 
 Auto normally shows the face; a tap shows the clock for ten seconds. Clock mode
-keeps the clock visible, and Buddy mode keeps the face. The default timezone is
+shows time while awake, and Buddy mode shows the face. The default timezone is
 India (`IST-5:30`); change the POSIX timezone in the local page if needed.
 
 NTP sets the time. The browser also has a manual time-sync control. Without a
@@ -69,3 +69,20 @@ unavailability, invalid IDs and oversized/unreadable replies produce an error.
 after 15 seconds and cannot be downloaded through the framebuffer endpoint.
 Forget Wi-Fi defaults to Cancel and requires selecting Forget network and holding.
 It preserves display mode, accent colour, timezone, Calendar and WLED preferences.
+
+## Return to buddy after inactivity
+
+After 60 seconds without button activity or an action in the local web controls,
+Feni returns from any menu, Calendar card, timer page or clock to the buddy face.
+Holding the physical button also counts as activity. Status polling, preview
+refreshes and normal background network work do not restart this timeout.
+
+The saved display mode and theme stay unchanged. Tap or hold wakes the controls;
+Clock mode shows the white clock again when tapped. Timers continue counting in
+the background, and later timer alarms and Calendar reminders still appear.
+A newly active meeting gets its own one-minute viewing window on the Buddy/Auto
+home screen; it does not extend an open menu's timeout. The shorter ten-second
+Auto clock peek and fifteen-second password hiding still apply.
+
+The setup hotspot keeps running if Wi-Fi is unavailable. After the face appears,
+a button action brings back the offline controls or setup information.

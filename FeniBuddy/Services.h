@@ -13,11 +13,12 @@ char wledVerifyIp[16]={},wledVerifyName[21]={};
 String asJson(JsonDocument &doc) {String output;serializeJson(doc,output);return output;}
 String statusJson() {
   DynamicJsonDocument doc(4096);
-  doc["name"]="Feni";doc["firmware"]="feni-buddy-3.2.1";
+  doc["name"]="Feni";doc["firmware"]="feni-buddy-3.2.2";
   doc["wifi"]=ui.online;doc["setup"]=apActive;doc["ip"]=WiFi.localIP().toString();doc["networkMessage"]=networkMessage;
   doc["ssid"]=settings.ssid;doc["mode"]=int(ui.mode);doc["page"]=int(ui.page);doc["choice"]=ui.choice;doc["menu"]=ui.menu;
   doc["theme"]=ui.theme;doc["meetingActive"]=ui.meetingActive;doc["meetingVisible"]=ui.showMeeting();doc["meetingSeconds"]=meetingIndex>=0 ? events[meetingIndex].end-epochNow() : 0;
-  doc["clock"]=epochNow();doc["timezone"]=settings.timezone;doc["peek"]=ui.peek;
+  doc["clock"]=epochNow();doc["timezone"]=settings.timezone;doc["peek"]=ui.peek;doc["idleBuddy"]=ui.idleBuddy;doc["idleTimeoutSeconds"]=buddy::Ui::IdleTimeout/1000;doc["activityAt"]=ui.activityAt;
+  doc["idleEnteredAt"]=ui.idleEnteredAt;
   doc["timerRunning"]=ui.timerRunning;doc["timerSeconds"]=ui.secondsLeft(millis());doc["timerDone"]=ui.timerDone;
   doc["timerDurationSeconds"]=ui.timerLength/1000;doc["customMinutes"]=ui.customMinutes;doc["customField"]=ui.customField;
   doc["menuCount"]=buddy::MenuCount;doc["settingsMessage"]=settingsMessage;
@@ -44,7 +45,7 @@ String statusJson() {
 }
 bool authorizeWrite() {
   if(server.header("X-Feni-Token")!=csrfToken) {server.send(403,"text/plain","Reload the Feni page and try again.");return false;}
-  lastInputAt=millis();
+  lastInputAt=millis();ui.noteActivity(lastInputAt);
   return true;
 }
 bool numberArg(const String &name,uint32_t &result) {
