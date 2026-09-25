@@ -71,7 +71,7 @@ void setup() {
   // It runs at network yields as well, retaining gestures during HTTPS requests.
   if(!schedule_recurrent_function_us([](){ sampleControls();return true; },10000))
     Serial.println(F("Warning: background input sampler unavailable"));
-  Serial.println(F("FeniBuddy 3.2.0 ready. STATUS for diagnostics."));
+  Serial.println(F("FeniBuddy 3.2.1 ready. STATUS for diagnostics."));
 }
 
 void loop() {

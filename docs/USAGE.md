@@ -11,7 +11,7 @@ to distinguish a double tap. A hold triggers at about 900 ms.
 | WLED MODE | Tap through favorite presets; hold applies one. |
 | SETTINGS | Wi-Fi submenu and Accent Colours. |
 
-The current release is v3.2.0. Larger menus show three filled rectangular rows;
+The current release is v3.2.1. Larger menus show three filled rectangular rows;
 tap scrolls through all choices while keeping the selected row visible.
 
 ## Accent colours
@@ -20,7 +20,7 @@ Open **Settings > Accent Colours**. Tap through Cyan, Orange, Green and Purple;
 hold to apply. An asterisk marks the active theme. The selection persists after
 reboot. Eyes and menus use the selected colour; the clock uses white only.
 Calendar cards use a dark title block, an event-colour edge and a coloured time
-bar. Regular-weight text keeps the layout simple; cards retain their Google-assigned colour. The local web page
+bar. Bold text improves visibility; cards retain their Google-assigned colour. The local web page
 also provides an accent selector.
 
 ## Meeting countdowns

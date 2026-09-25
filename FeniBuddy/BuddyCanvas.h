@@ -1,8 +1,8 @@
 #pragma once
-#include <Fonts/FreeSans9pt7b.h>
-#include <Fonts/FreeSans12pt7b.h>
-#include <Fonts/FreeSans18pt7b.h>
-#include <Fonts/FreeSans24pt7b.h>
+#include <Fonts/FreeSansBold9pt7b.h>
+#include <Fonts/FreeSansBold12pt7b.h>
+#include <Fonts/FreeSansBold18pt7b.h>
+#include <Fonts/FreeSansBold24pt7b.h>
 #include "Theme.h"
 // 2-bit framebuffer: 5 KB, with row accents for event cards. TLS retains its IRAM heap.
 class BuddyCanvas : public Adafruit_GFX {
@@ -31,7 +31,7 @@ class BuddyCanvas : public Adafruit_GFX {
   void clearDisplay() { fillScreen(0); }
   void font(uint8_t size=1) {
     setTextSize(1);setTextWrap(false);
-    setFont(size>=4?&FreeSans24pt7b:size==3?&FreeSans18pt7b:size==2?&FreeSans12pt7b:&FreeSans9pt7b);
+    setFont(size>=4?&FreeSansBold24pt7b:size==3?&FreeSansBold18pt7b:size==2?&FreeSansBold12pt7b:&FreeSansBold9pt7b);
   }
   int width(const String &value,uint8_t size=1) {
     font(size);int16_t x,y;uint16_t w,h;getTextBounds(value,0,0,&x,&y,&w,&h);return w;

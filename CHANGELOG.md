@@ -1,5 +1,9 @@
 # Changelog
 
+## 3.2.1
+
+- Restore bold FreeSans fonts throughout the UI, retaining the current Calendar cards, colours and layout.
+
 ## 3.2.0
 
 - Active Google Calendar meetings show the event name and time remaining.

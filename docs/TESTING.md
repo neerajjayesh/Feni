@@ -72,3 +72,9 @@ survived the upload/reboot, Wi-Fi and Calendar settings remained intact, and a
 fresh HTTPS sync returned three coloured events. Final free heap was 27,312
 bytes, largest DRAM block 24,560 bytes and largest IRAM block 20,016 bytes.
 The normal build rejected the development-only meeting command. Cyan was restored.
+
+## v3.2.1 font update
+
+Restored bold FreeSans fonts and verified the menu, clock and Calendar card on
+the TFT framebuffer after flashing. The clock remained white, saved theme/mode
+and connections were preserved, and live Calendar sync returned three events.
