@@ -27,10 +27,14 @@ permission; Google OAuth credentials are never copied to the ESP8266.
     for HTTPS certificate checks. Use **Refresh events** to request another sync.
 
 The feed contains up to eight current/upcoming events from the next 14 days.
+Each entry includes its event colour (or the calendar colour when no event
+colour is assigned). The firmware displays this on the event card edge and time bar.
+Named Google colours are mapped to display swatches and converted to RGB565.
 Recurring instances are expanded; declined and ended events are omitted. Titles
 are converted to printable ASCII for the display. Timed events have reminders
 ten minutes before and at their start. All-day entries do not trigger a midnight
-reminder. Stale cached data is marked and does not generate new reminders.
+reminder or a meeting timer. During a timed event, Feni shows its name and
+remaining time; see [meeting controls](USAGE.md#meeting-countdowns). Stale cached data is marked and does not generate new reminders.
 
 Feni normally checks every two minutes while at Home or on the running-timer
 screen. A long menu session or loss of internet can delay updates. The cached

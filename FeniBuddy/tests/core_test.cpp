@@ -127,21 +127,26 @@ void customTimer() {
 void wifiSettings() {
   Ui ui;ui.page=Page::Menu;ui.menu=4;ui.online=true;
   ui.handle(Gesture::Hold,1000);CHECK(ui.page==Page::Settings);
-  ui.handle(Gesture::Hold,2000);CHECK(ui.page==Page::WifiInfo);
-  ui.handle(Gesture::DoubleTap,3000);CHECK(ui.page==Page::Settings && ui.choice==0);
+  ui.handle(Gesture::Hold,2000);CHECK(ui.page==Page::Wifi);
+  ui.handle(Gesture::Hold,2500);CHECK(ui.page==Page::WifiInfo);
+  ui.back();CHECK(ui.page==Page::Wifi && ui.choice==0);
   ui.handle(Gesture::Tap,4000);ui.handle(Gesture::Hold,5000);CHECK(ui.page==Page::WifiPassword);
-  ui.update(19999);CHECK(ui.page==Page::WifiPassword);ui.update(20000);CHECK(ui.page==Page::Settings && ui.choice==1);
-  ui.handle(Gesture::Hold,21000);ui.handle(Gesture::DoubleTap,22000);CHECK(ui.page==Page::Settings && ui.choice==1);
+  ui.update(19999);CHECK(ui.page==Page::WifiPassword);ui.update(20000);CHECK(ui.page==Page::Wifi && ui.choice==1);
   ui.handle(Gesture::Tap,23000);ui.handle(Gesture::Hold,24000);CHECK(ui.page==Page::ForgetWifi && ui.choice==0);
-  ui.handle(Gesture::Hold,25000);CHECK(ui.page==Page::Settings);CHECK(!ui.forgetRequested);CHECK(ui.online);
-  ui.handle(Gesture::Hold,26000);ui.handle(Gesture::Tap,27000);ui.handle(Gesture::DoubleTap,28000);
-  CHECK(ui.page==Page::Settings && ui.choice==2);CHECK(!ui.forgetRequested);
-  ui.handle(Gesture::Hold,29000);ui.handle(Gesture::Tap,30000);ui.handle(Gesture::Hold,31000);
-  CHECK(ui.forgetRequested);CHECK(ui.online); // Network/flash work is deferred to the main loop.
-  ui.forgetRequested=false;ui.handle(Gesture::DoubleTap,32000);CHECK(ui.page==Page::Menu && ui.menu==4);
-  ui.handle(Gesture::Tap,33000);CHECK(ui.menu==0);
-  ui.page=Page::Settings;ui.choice=1;ui.handle(Gesture::Hold,0xfffffff0UL);
+  ui.handle(Gesture::Hold,25000);CHECK(ui.page==Page::Wifi);CHECK(!ui.forgetRequested);
+  ui.handle(Gesture::Hold,26000);ui.handle(Gesture::Tap,27000);ui.back();CHECK(!ui.forgetRequested);
+  ui.handle(Gesture::Hold,29000);ui.handle(Gesture::Tap,30000);ui.handle(Gesture::Hold,31000);CHECK(ui.forgetRequested);
+  ui.forgetRequested=false;ui.back();CHECK(ui.page==Page::Settings && ui.choice==0);
+  ui.handle(Gesture::Tap,32000);ui.handle(Gesture::Hold,33000);CHECK(ui.page==Page::Colours && ui.choice==0);
+  for(int i=1;i<=4;++i){ui.handle(Gesture::Tap,34000+i);CHECK(ui.choice==i%4);}
+  ui.handle(Gesture::Tap,35000);CHECK(ui.theme==0);ui.handle(Gesture::Hold,36000);CHECK(ui.theme==1 && ui.themeChanged);
+  ui.back();CHECK(ui.page==Page::Settings && ui.choice==1);ui.back();CHECK(ui.page==Page::Menu && ui.menu==4);
+  ui.page=Page::Wifi;ui.choice=1;ui.handle(Gesture::Hold,0xfffffff0UL);
   ui.update(uint32_t(0xfffffff0UL+14999));CHECK(ui.page==Page::WifiPassword);
-  ui.update(uint32_t(0xfffffff0UL+15000));CHECK(ui.page==Page::Settings);
+  ui.update(uint32_t(0xfffffff0UL+15000));CHECK(ui.page==Page::Wifi);
+  ui.page=Page::Home;ui.meetingActive=true;CHECK(ui.showMeeting());ui.back();CHECK(!ui.showMeeting());
+  ui.meetingDismissed=false;ui.handle(Gesture::Tap,38000);CHECK(ui.showClock() && !ui.showMeeting());
+  ui.back();CHECK(ui.showMeeting());ui.mode=Mode::Clock;CHECK(!ui.showMeeting());
 }
+
 int main() {controls();menus();timersAndOverlays();customTimer();wifiSettings();printf("PASS: %u control, navigation, timer, and settings checks\n",checks);}

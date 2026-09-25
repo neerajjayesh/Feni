@@ -1,4 +1,4 @@
-/** Feni Calendar bridge. Read-only; no event contents beyond title and times. */
+/** Feni Calendar bridge. Read-only; only titles, times and colours leave Google. */
 function setupFeni() {
   const properties = PropertiesService.getScriptProperties();
   if (!properties.getProperty('FENI_KEY')) {
@@ -20,7 +20,16 @@ function constantTimeEqual(left, right) {
   return different === 0;
 }
 
-function compactEvents(source, nowMs) {
+// Google Calendar event colour IDs 1-11; swatches match the named Calendar UI colours.
+// https://developers.google.com/apps-script/reference/calendar/event-color
+function eventColour(event, fallback) {
+  const colours = ['', '#7986cb', '#33b679', '#8e24aa', '#e67c73', '#f6bf26', '#f4511e', '#039be5', '#616161', '#3f51b5', '#0b8043', '#d50000'];
+  const id = String(event.getColor());
+  if (/^(?:[1-9]|10|11)$/.test(id)) return colours[Number(id)];
+  return /^#[0-9a-f]{6}$/i.test(fallback || '') ? fallback.toLowerCase() : '';
+}
+
+function compactEvents(source, nowMs, fallbackColour) {
   const result = new Map();
   for (const event of source) {
     const startMs = event.getStartTime().getTime();
@@ -32,7 +41,7 @@ function compactEvents(source, nowMs) {
     const hash = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, event.getId() + ':' + start);
     const id = hash.map(value => ((value + 256) % 256).toString(16).padStart(2, '0')).join('').slice(0, 24);
     const title = event.getTitle().normalize('NFKD').replace(/[^\x20-\x7e]/g, '').replace(/\s+/g, ' ').trim().slice(0, 72) || 'Calendar event';
-    result.set(id, {id, title, start, end: Math.floor(endMs / 1000), allDay: event.isAllDayEvent()});
+    result.set(id, {id, title, start, end: Math.floor(endMs / 1000), allDay: event.isAllDayEvent(), color: eventColour(event, fallbackColour)});
   }
   return [...result.values()].sort((a, b) => a.start - b.start || a.id.localeCompare(b.id)).slice(0, 8);
 }
@@ -48,7 +57,7 @@ function doGet(request) {
     if (!calendar) return respond({ok: false});
     const nowMs = Date.now();
     // getEvents expands recurring instances, including edits and cancellations.
-    const events = compactEvents(calendar.getEvents(new Date(nowMs), new Date(nowMs + 14 * 86400000)), nowMs);
+    const events = compactEvents(calendar.getEvents(new Date(nowMs), new Date(nowMs + 14 * 86400000)), nowMs, calendar.getColor());
     return respond({ok: true, fetchedAt: Math.floor(nowMs / 1000), events});
   } catch (error) {
     return respond({ok: false});

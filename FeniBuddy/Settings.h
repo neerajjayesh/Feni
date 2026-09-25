@@ -12,6 +12,19 @@ struct Config {
   uint32_t checksum;
 };
 Config settings = {};
+// Separate record preserves the byte layout and checksum of every v3.1 Wi-Fi/Calendar setting.
+constexpr int THEME_OFFSET = 1152;
+struct ThemeRecord { uint32_t magic; uint8_t value, inverse, reserved[2]; };
+static_assert(CONFIG_OFFSET + sizeof(Config) <= THEME_OFFSET,"Theme does not overlap credentials");
+uint8_t loadTheme() {
+  ThemeRecord record={}; EEPROM.begin(EEPROM_BYTES); EEPROM.get(THEME_OFFSET,record); EEPROM.end();
+  return record.magic==0x46434c31 && record.value<4 && record.inverse==uint8_t(~record.value) ? record.value : 0;
+}
+bool saveTheme(uint8_t value) {
+  if(value>3) return false;
+  ThemeRecord record={0x46434c31,value,uint8_t(~value),{0,0}};
+  EEPROM.begin(EEPROM_BYTES); EEPROM.put(THEME_OFFSET,record); bool ok=EEPROM.commit(); EEPROM.end(); return ok;
+}
 void clearWifiCredentials(Config &value) {
   memset(value.ssid, 0, sizeof(value.ssid));
   memset(value.password, 0, sizeof(value.password));

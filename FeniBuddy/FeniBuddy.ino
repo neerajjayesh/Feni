@@ -62,7 +62,7 @@ void setup() {
   tft.initR(TFT_TAB);tft.setRotation(TFT_ROTATION);tft.setSPISpeed(16000000);
   eyes.begin(160,128,25);configureCenteredFace(eyes);
   eyes.setAutoblinker(ON,3,3);eyes.open();
-  loadConfig();ui.mode=static_cast<buddy::Mode>(settings.mode);ui.presetCount=settings.presetCount;
+  loadConfig();ui.theme=loadTheme();ui.mode=static_cast<buddy::Mode>(settings.mode);ui.presetCount=settings.presetCount;
   if(settings.deployment[0]) calendarMessage="Waiting for first sync";
   if(settings.wledIp[0]) wledMessage="Hold a preset to apply";
   configTime(settings.timezone,"pool.ntp.org","time.google.com");
@@ -71,7 +71,7 @@ void setup() {
   // It runs at network yields as well, retaining gestures during HTTPS requests.
   if(!schedule_recurrent_function_us([](){ sampleControls();return true; },10000))
     Serial.println(F("Warning: background input sampler unavailable"));
-  Serial.println(F("FeniBuddy 3.1.1 ready. STATUS for diagnostics."));
+  Serial.println(F("FeniBuddy 3.2.0 ready. STATUS for diagnostics."));
 }
 
 void loop() {
@@ -90,7 +90,13 @@ void loop() {
     if(saveConfig(settings)) settingsDirty=false;
     else {settingsDirtyAt=millis();Serial.println(F("Settings save failed; retrying"));}
   }
-  handleCalendarReminders(); renderUi(millis());
+  static bool themeDirty=false;static uint32_t themeDirtyAt=0;
+  if(ui.themeChanged){ui.themeChanged=false;themeDirty=true;themeDirtyAt=millis();}
+  if(themeDirty && millis()-themeDirtyAt>=1500){if(saveTheme(ui.theme))themeDirty=false;else themeDirtyAt=millis();}
+#ifdef FENI_TEST_SCENES
+  pollCalendarFixture();
+#endif
+  updateMeeting();handleCalendarReminders(); renderUi(millis());
   if(ui.requestedPreset>=0) {
     int selected=ui.requestedPreset;ui.requestedPreset=-1;applyWledPreset(selected);
   }

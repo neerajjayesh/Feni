@@ -18,6 +18,9 @@ int main() {
   strcpy(settings.calendarKey,"test-calendar-key");strcpy(settings.wledIp,"192.168.1.60");
   settings.mode=1;settings.presetCount=1;settings.presets[0].id=7;strcpy(settings.presets[0].name,"Test preset");
   assert(saveConfig(settings));Config before=settings;
+  assert(loadTheme()==0);
+  for(uint8_t t=0;t<4;++t){assert(saveTheme(t));assert(loadTheme()==t);loadConfig();assert(!memcmp(&settings,&before,sizeof(Config)));}
+  assert(!saveTheme(4));EEPROM.fail=true;assert(!saveTheme(0));assert(loadTheme()==3);EEPROM.fail=false;
   Config candidate=settings;clearWifiCredentials(candidate);
   for(char value:candidate.ssid)assert(value==0);for(char value:candidate.password)assert(value==0);
   assert(candidate.mode==before.mode && !strcmp(candidate.calendarKey,before.calendarKey));

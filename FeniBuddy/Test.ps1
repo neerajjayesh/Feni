@@ -10,7 +10,7 @@ if (-not (Test-Path -LiteralPath $ArduinoJsonPath)) { throw 'Set -ArduinoJsonPat
 # Keep test executables outside the Arduino build directory, which the CLI cleans.
 $buddyTests = Join-Path $buddyRoot 'runtime\buddy-tests'
 New-Item -ItemType Directory -Force -Path $buddyTests | Out-Null
-foreach ($buddyCase in @('core', 'wled', 'settings', 'face', 'body')) {
+foreach ($buddyCase in @('core', 'wled', 'settings', 'face', 'body', 'meeting')) {
     $buddySource = Join-Path $PSScriptRoot ('tests\' + $buddyCase + '_test.cpp')
     $buddyExecutable = Join-Path $buddyTests ($buddyCase + '-tests.exe')
     & $ZigPath c++ -std=c++11 -O1 -I $ArduinoJsonPath $buddySource -o $buddyExecutable

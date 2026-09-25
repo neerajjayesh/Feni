@@ -9,9 +9,33 @@ to distinguish a double tap. A hold triggers at about 900 ms.
 | MODE | Buddy, Clock, or Auto. Hold saves the highlighted choice. |
 | TIMER | 10, 20, 30 minutes, or Custom. Hold starts; hold a running timer to cancel. |
 | WLED MODE | Tap through favorite presets; hold applies one. |
-| SETTINGS | Wi-Fi details, temporary password view, and Forget Wi-Fi. |
+| SETTINGS | Wi-Fi submenu and Accent Colours. |
 
-The current release is v3.1.1. Menu changes in later releases are documented here.
+The current release is v3.2.0. Larger menus show three filled rectangular rows;
+tap scrolls through all choices while keeping the selected row visible.
+
+## Accent colours
+
+Open **Settings > Accent Colours**. Tap through Cyan, Orange, Green and Purple;
+hold to apply. An asterisk marks the active theme. The selection persists after
+reboot. Eyes and menus use the selected colour; the clock uses white only.
+Calendar cards use a dark title block, an event-colour edge and a coloured time
+bar. Regular-weight text keeps the layout simple; cards retain their Google-assigned colour. The local web page
+also provides an accent selector.
+
+## Meeting countdowns
+
+Active timed events automatically show their name with time remaining beneath
+it on the Buddy/Auto home screen. Clock mode stays on its white clock. In Auto,
+tap still shows the clock for ten seconds; double tap dismisses the meeting
+until a different event becomes active. Hold opens the menu as usual. Calendar
+cards also show countdowns for ongoing timed events.
+
+For overlapping events, the soonest ending active event takes priority. All-day
+events have no countdown. Event end times are exclusive: the countdown disappears
+when the event ends. An already active cached meeting may finish offline, but
+stale data cannot start a new meeting. Fetching over HTTPS can briefly pause
+redraws; the countdown is calculated from the current time, so it catches up.
 
 ## Timers
 
@@ -41,7 +65,7 @@ unavailability, invalid IDs and oversized/unreadable replies produce an error.
 
 ## Wi-Fi settings
 
-Wi-Fi details displays the saved SSID and connected IP. The password view hides
+**Settings > Wi-Fi > Network details** displays the saved SSID and connected IP. The password view hides
 after 15 seconds and cannot be downloaded through the framebuffer endpoint.
 Forget Wi-Fi defaults to Cancel and requires selecting Forget network and holding.
-It preserves display mode, timezone, Calendar and WLED preferences.
+It preserves display mode, accent colour, timezone, Calendar and WLED preferences.

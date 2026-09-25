@@ -8,13 +8,13 @@ const source=fs.readFileSync(path.join(__dirname,'../calendar/Code.gs'),'utf8');
 let calendarReads=0;
 const properties=new Map([['FENI_KEY','a'.repeat(64)],['CALENDAR_ID','primary']]);
 const now=Date.now();
-const makeEvent=(id,start,end,title='Hello',allDay=false,status='YES')=>({
- getId:()=>id,getStartTime:()=>new Date(start),getEndTime:()=>new Date(end),getTitle:()=>title,isAllDayEvent:()=>allDay,getMyStatus:()=>status
+const makeEvent=(id,start,end,title='Hello',allDay=false,status='YES',color='')=>({
+ getColor:()=>color,getId:()=>id,getStartTime:()=>new Date(start),getEndTime:()=>new Date(end),getTitle:()=>title,isAllDayEvent:()=>allDay,getMyStatus:()=>status
 });
 let sourceEvents=[];
 const context=vm.createContext({
  console,Date,Map,
- CalendarApp:{GuestStatus:{NO:'NO'},getCalendarById:()=>{calendarReads++;return {getEvents:()=>sourceEvents};}},
+ CalendarApp:{GuestStatus:{NO:'NO'},getCalendarById:()=>{calendarReads++;return {getColor:()=>'#123abc',getEvents:()=>sourceEvents};}},
  PropertiesService:{getScriptProperties:()=>({getProperty:key=>properties.get(key)||null})},
  Utilities:{DigestAlgorithm:{SHA_256:'sha256'},computeDigest:(algorithm,text)=>[...crypto.createHash(algorithm).update(text).digest()]},
  ContentService:{MimeType:{JSON:'json'},createTextOutput:text=>({setMimeType:()=>JSON.parse(text)})}
@@ -33,6 +33,10 @@ sourceEvents=[];result=context.doGet({parameter:{key:'a'.repeat(64)}});assert.de
 sourceEvents=Array.from({length:20},(_,i)=>makeEvent('id'+i,now+i*60000,now+(i+1)*60000,'x'.repeat(200)));
 result=context.doGet({parameter:{key:'a'.repeat(64)}});assert.equal(result.events.length,8);
 assert.equal(result.events[0].title.length,72);assert.ok(JSON.stringify(result).length<=3072);
+assert.equal(context.eventColour(makeEvent('a',now,now+1000,'A',false,'YES','11'),'#123abc'),'#d50000');
+assert.equal(context.eventColour(first,'#123ABC'),'#123abc');
+assert.equal(context.eventColour(first,'invalid'),'');
+assert.equal(result.events[0].color,'#123abc');
 properties.delete('FENI_KEY');assert.equal(context.doGet({parameter:{key:''}}).ok,false);
 // Parse the exact browser script embedded in firmware as JavaScript too.
 const page=fs.readFileSync(path.join(__dirname,'../Page.h'),'utf8');

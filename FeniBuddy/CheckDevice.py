@@ -27,7 +27,7 @@ def request(board, command, timeout=4):
                 state = json.loads(line)
             except ValueError:
                 continue
-            if state.get('firmware') not in ('feni-buddy-3.1', 'feni-buddy-3.1.1'):
+            if state.get('firmware') != 'feni-buddy-3.2.0':
                 raise RuntimeError('Unexpected firmware: ' + str(state.get('firmware')))
             return state
         if command != 'STATUS' and line == 'OK':
@@ -40,7 +40,7 @@ def summary(state):
               'timerRunning', 'timerDone', 'timerSeconds', 'timerDurationSeconds',
               'customMinutes', 'customField', 'menuCount', 'faceFixed', 'eyeLeftX',
               'eyeRightX', 'eyeTargetY', 'touchReady',
-              'touchActive', 'heap', 'maxBlock', 'frames', 'uptimeMs', 'clock')
+              'touchActive', 'theme', 'meetingActive', 'meetingVisible', 'calendarFresh', 'heap', 'maxBlock', 'frames', 'uptimeMs', 'clock')
     return {key: state[key] for key in fields if key in state}
 
 
@@ -95,7 +95,7 @@ def smoke(board):
         time.sleep(0.25)
         code, frame = http('/frame.bmp')
         check(code == 200 and frame[:2] == b'BM', name + ' framebuffer is available')
-        (ROOT / 'runtime' / ('buddy-3.1-' + name + '.bmp')).write_bytes(frame)
+        (ROOT / 'runtime' / ('buddy-3.2-' + name + '.bmp')).write_bytes(frame)
 
     def home():
         for _ in range(5):
@@ -158,9 +158,12 @@ def smoke(board):
     check(status()['page'] == 6, 'Settings menu opens')
     capture('settings')
     request(board, 'HOLD')
+    check(status()['page'] == 11, 'Nested Wi-Fi menu opens')
+    capture('wifi-menu')
+    request(board, 'HOLD')
     check(status()['page'] == 7 and status()['ssid'] == first['ssid'], 'Wi-Fi details opens for the saved network')
     request(board, 'BACK')
-    check(status()['page'] == 6 and status()['choice'] == 0, 'Wi-Fi details Back returns to Settings')
+    check(status()['page'] == 11 and status()['choice'] == 0, 'Wi-Fi details Back returns to Wi-Fi')
     request(board, 'TAP')
     request(board, 'HOLD')
     check(status()['page'] == 8, 'Show password opens on the physical display')
@@ -169,17 +172,17 @@ def smoke(board):
         check(code == 403, 'Password screen cannot be downloaded as a framebuffer')
         check('password' not in status(), 'Status diagnostics do not contain the password')
     time.sleep(15.3)
-    check(status()['page'] == 6 and status()['choice'] == 1, 'Password automatically hides after 15 seconds')
+    check(status()['page'] == 11 and status()['choice'] == 1, 'Password automatically hides after 15 seconds')
     request(board, 'TAP')
     request(board, 'HOLD')
     check(status()['page'] == 9 and status()['choice'] == 0, 'Forget Wi-Fi confirmation defaults to Cancel')
     capture('forget-confirm')
     request(board, 'TAP')
     request(board, 'BACK')
-    check(status()['page'] == 6 and status()['ssid'] == first['ssid'], 'Back cancels Forget without changing Wi-Fi')
+    check(status()['page'] == 11 and status()['ssid'] == first['ssid'], 'Back cancels Forget without changing Wi-Fi')
     request(board, 'HOLD')
     request(board, 'HOLD')
-    check(status()['page'] == 6 and status()['ssid'] == first['ssid'], 'Holding Cancel preserves Wi-Fi')
+    check(status()['page'] == 11 and status()['ssid'] == first['ssid'], 'Holding Cancel preserves Wi-Fi')
     home()
     while time.monotonic() < timer_deadline:
         current = status()

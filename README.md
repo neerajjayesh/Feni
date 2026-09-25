@@ -3,7 +3,7 @@
 An ESP8266 desk companion with a 1.8-inch TFT: a centered animated face, clock,
 Google Calendar reminders, countdown timers, and WLED preset control.
 
-**Working baseline: v3.1.1.** Designed for a NodeMCU ESP8266 and an ST7735
+**Current firmware: v3.2.0.** The original working baseline is tagged `v3.1.1`. Designed for a NodeMCU ESP8266 and an ST7735
 128 x 160 SPI display, used in landscape at 160 x 128.
 
 ## Components
@@ -41,20 +41,23 @@ variants may need changes in [Hardware.h](FeniBuddy/Hardware.h).
 3. Enter your 2.4 GHz Wi-Fi details. Feni saves them and closes the setup hotspot
    after connecting. A router may use one SSID for both bands; ESP8266 uses 2.4 GHz.
 4. Rejoin your normal network and open **http://feni.local**, or Feni's IP shown
-   in Settings / Wi-Fi details or USB `STATUS` output.
+   in Settings / Wi-Fi / Network details or USB `STATUS` output.
 5. Optionally follow [Google Calendar setup](docs/CALENDAR.md) and
    [WLED setup](docs/USAGE.md#wled).
 
 ## Features
 
 - Centered RoboEyes animations and Buddy / Clock / Auto display modes.
-- In Auto, a tap shows the clock for ten seconds.
+- In Auto, a tap shows the clock for ten seconds. The clock remains white.
+- Cyan, Orange, Green and Purple accent themes, including the eyes.
+- Larger, regular-weight FreeSans text and filled rectangular menu selections.
 - NTP clock, default India timezone, with manual time sync in the local page.
 - Google Calendar feed with current/upcoming events, and visual reminders ten
   minutes before timed events and at their start. No PC bridge is needed.
+- Active meeting name and remaining-time display, with Google event colour cards.
 - 10-, 20-, 30-minute timers and custom durations from 1 to 180 minutes.
 - WLED IP and preset favorites configured through the local web page.
-- Saved Wi-Fi details, temporary password display, and a Forget network option.
+- Settings / Wi-Fi contains saved Wi-Fi details, temporary password display, and a Forget network option.
 - Setup hotspot recovery when a saved network is unavailable.
 
 ## Controls

@@ -1,6 +1,7 @@
 #pragma once
 #include "GoogleRoots.h"
-struct Event { char id[25], title[73]; uint32_t start,end; bool allDay; };
+#include "Meeting.h"
+struct Event { char id[25], title[73]; uint32_t start,end; bool allDay; uint16_t colour; };
 Event events[8] = {};
 uint8_t eventCount=0;
 uint32_t calendarFetched=0, calendarAttemptAt=0;
@@ -10,6 +11,9 @@ Event reminderEvent={};
 struct Seen { char id[25]; uint32_t start; uint8_t stages; };
 Seen seen[16]={};
 uint8_t seenCursor=0;
+int meetingIndex=-1;
+char meetingId[25]={};
+uint32_t meetingStart=0;
 
 #include "BoundedBody.h"
 
@@ -26,6 +30,15 @@ bool safeKey(const String &value,size_t minimum,size_t maximum) {
   return true;
 }
 bool calendarFresh() { return calendarFetched && epochNow() && epochNow()>=calendarFetched && epochNow()-calendarFetched<=900; }
+void updateMeeting() {
+  // A cached active meeting may finish offline. Do not start another from stale data.
+  int next=buddy::activeMeeting(events,eventCount,epochNow(),calendarFresh()?nullptr:meetingId,meetingStart);
+  if(next<0) { meetingId[0]=0;meetingStart=0;ui.meetingDismissed=false; }
+  else if(strcmp(meetingId,events[next].id) || meetingStart!=events[next].start) {
+    strlcpy(meetingId,events[next].id,sizeof(meetingId));meetingStart=events[next].start;ui.meetingDismissed=false;
+  }
+  meetingIndex=next;ui.meetingActive=next>=0;
+}
 
 bool parseCalendar(const char *body) {
   DynamicJsonDocument doc(4096);
@@ -44,6 +57,7 @@ bool parseCalendar(const char *body) {
     Event &event=candidate[count++];
     strlcpy(event.id,id,sizeof(event.id));cleanText(title,72).toCharArray(event.title,sizeof(event.title));
     event.start=row["start"];event.end=row["end"];event.allDay=row["allDay"] | false;
+    event.colour=buddy::parseColour(row["color"] | "");
     if(event.start<1700000000 || event.end<=event.start) {calendarMessage="Invalid event dates";return false;}
   }
   for(int i=0;i<count;++i) for(int j=i+1;j<count;++j) if(candidate[j].start<candidate[i].start) {

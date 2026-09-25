@@ -13,9 +13,10 @@ char wledVerifyIp[16]={},wledVerifyName[21]={};
 String asJson(JsonDocument &doc) {String output;serializeJson(doc,output);return output;}
 String statusJson() {
   DynamicJsonDocument doc(4096);
-  doc["name"]="Feni";doc["firmware"]="feni-buddy-3.1.1";
+  doc["name"]="Feni";doc["firmware"]="feni-buddy-3.2.0";
   doc["wifi"]=ui.online;doc["setup"]=apActive;doc["ip"]=WiFi.localIP().toString();doc["networkMessage"]=networkMessage;
   doc["ssid"]=settings.ssid;doc["mode"]=int(ui.mode);doc["page"]=int(ui.page);doc["choice"]=ui.choice;doc["menu"]=ui.menu;
+  doc["theme"]=ui.theme;doc["meetingActive"]=ui.meetingActive;doc["meetingVisible"]=ui.showMeeting();doc["meetingSeconds"]=meetingIndex>=0 ? events[meetingIndex].end-epochNow() : 0;
   doc["clock"]=epochNow();doc["timezone"]=settings.timezone;doc["peek"]=ui.peek;
   doc["timerRunning"]=ui.timerRunning;doc["timerSeconds"]=ui.secondsLeft(millis());doc["timerDone"]=ui.timerDone;
   doc["timerDurationSeconds"]=ui.timerLength/1000;doc["customMinutes"]=ui.customMinutes;doc["customField"]=ui.customField;
@@ -35,7 +36,7 @@ String statusJson() {
   doc["calendarConfigured"]=settings.deployment[0] && settings.calendarKey[0];doc["calendarFresh"]=calendarFresh();
   doc["calendarMessage"]=calendarMessage;doc["calendarFetched"]=calendarFetched;doc["reminder"]=ui.reminder;
   JsonArray rows=doc.createNestedArray("events");
-  for(int i=0;i<eventCount;++i) {JsonObject row=rows.createNestedObject();row["title"]=events[i].title;row["start"]=events[i].start;row["allDay"]=events[i].allDay;}
+  for(int i=0;i<eventCount;++i) {JsonObject row=rows.createNestedObject();row["title"]=events[i].title;row["start"]=events[i].start;row["allDay"]=events[i].allDay;row["end"]=events[i].end;row["color565"]=events[i].colour;}
   doc["wledIp"]=settings.wledIp;doc["wledMessage"]=wledMessage;
   JsonArray presets=doc.createNestedArray("presets");
   for(int i=0;i<settings.presetCount;++i) {JsonObject p=presets.createNestedObject();p["id"]=settings.presets[i].id;p["name"]=settings.presets[i].name;}
@@ -204,6 +205,12 @@ void startNetwork() {
     server.send(200,"text/plain","Forgetting Wi-Fi. Join Feni-Setup, then open http://192.168.4.1.");
     forgetRequestAt=millis();ui.forgetRequested=true;
   });
+  server.on("/theme",HTTP_POST,[](){
+    if(!authorizeWrite())return;uint32_t value;
+    if(!numberArg("theme",value)||value>3){server.send(400,"text/plain","Choose a valid accent colour.");return;}
+    ui.theme=value;ui.themeChanged=true;if(ui.page==buddy::Page::Colours)ui.choice=value;
+    server.send(200,"text/plain","Accent colour applied.");
+  });
   server.on("/timer",HTTP_POST,[](){
     if(!authorizeWrite())return;
     if(server.arg("action")=="cancel") {ui.cancelTimer();server.send(200,"text/plain","Timer cancelled.");return;}
@@ -233,7 +240,7 @@ void startNetwork() {
   server.on("/frame.bmp",HTTP_GET,[](){
     server.sendHeader("Cache-Control","no-store");
     if(frameContainsPassword || ui.page==buddy::Page::WifiPassword) {server.send(403,"text/plain","Password is visible only on Feni's screen.");return;}
-    server.setContentLength(2622);server.send(200,"image/bmp","");WiFiClient client=server.client();canvas.writeBmp(client);
+    server.setContentLength(BuddyCanvas::BmpBytes);server.send(200,"image/bmp","");WiFiClient client=server.client();canvas.writeBmp(client);
   });
   server.on("/generate_204",HTTP_GET,sendPage);server.on("/hotspot-detect.html",HTTP_GET,sendPage);
   server.on("/connecttest.txt",HTTP_GET,sendPage);server.on("/ncsi.txt",HTTP_GET,sendPage);
@@ -273,12 +280,20 @@ void handleNetwork() {
     }
   }
 }
+#ifdef FENI_TEST_SCENES
+#include "tests/FirmwareScenes.h"
+#endif
 void handleSerial() {
   static char line[32];static uint8_t used=0;static bool overflow=false;
   for(int budget=0;budget<64 && Serial.available();++budget) {
     char c=Serial.read();if(c=='\r')continue;
     if(c=='\n') {
       line[used]=0;
+#ifdef FENI_TEST_SCENES
+      if(!overflow && !strcmp(line,"TEST_MEETING")){startCalendarFixture();Serial.println(F("OK"));}
+      else if(!overflow && !strcmp(line,"TEST_END")){stopCalendarFixture();Serial.println(F("OK"));}
+      else
+#endif
       if(!overflow && !strcmp(line,"STATUS")) Serial.println(statusJson());
       else if(!overflow && !strcmp(line,"WIFI")) {
         // Scan only reports matches for the configured network; never credentials.
