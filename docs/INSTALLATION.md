@@ -17,8 +17,9 @@
 
 5. Open `FeniBuddy/FeniBuddy.ino` from this repository.
 6. Select **NodeMCU 1.0 (ESP-12E Module)** and your USB serial port.
-7. Set **MMU: 16KB cache + 48KB IRAM and 2nd Heap (shared)**. Keep other board
-   settings at their defaults. The second heap is required for Calendar TLS buffers.
+7. Set **MMU: 16KB cache + 48KB IRAM and 2nd Heap (shared)** and **Flash Size:
+   4MB (FS:1MB OTA:~1019KB)**. The second heap is required for Calendar TLS buffers;
+   the filesystem stores uploaded animations. Keep other board settings at defaults.
 8. Upload. Automatic reset normally handles the bootloader. Release FLASH for
    the normal startup after uploading.
 
@@ -34,9 +35,9 @@ Install Arduino CLI, then from the repository root:
 arduino-cli core update-index --additional-urls https://arduino.esp8266.com/stable/package_esp8266com_index.json
 arduino-cli core install esp8266:esp8266@3.1.2 --additional-urls https://arduino.esp8266.com/stable/package_esp8266com_index.json
 arduino-cli lib install "Adafruit GFX Library@1.12.6" "Adafruit BusIO@1.17.4" "Adafruit ST7735 and ST7789 Library@1.11.0" "ArduinoJson@6.21.6"
-arduino-cli compile --fqbn esp8266:esp8266:nodemcuv2:mmu=4816H --build-path build-feni-buddy FeniBuddy
+arduino-cli compile --fqbn esp8266:esp8266:nodemcuv2:mmu=4816H,eesz=4M1M --build-path build-feni-buddy FeniBuddy
 arduino-cli board list
-arduino-cli upload --fqbn esp8266:esp8266:nodemcuv2:mmu=4816H --port YOUR_PORT --input-dir build-feni-buddy FeniBuddy
+arduino-cli upload --fqbn esp8266:esp8266:nodemcuv2:mmu=4816H,eesz=4M1M --port YOUR_PORT --input-dir build-feni-buddy FeniBuddy
 ```
 
 Replace `YOUR_PORT` with the detected port, such as `COM8` or `/dev/ttyUSB0`.

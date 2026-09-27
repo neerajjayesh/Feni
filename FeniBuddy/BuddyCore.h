@@ -61,6 +61,7 @@ struct Ui {
   static constexpr uint32_t SleepTimeout = 300000, WakeDuration = 1400, StartupDuration = 1800;
   FacePhase facePhase = FacePhase::Awake;
   uint32_t facePhaseAt = 0;
+  uint32_t startupDuration=StartupDuration,wakeDuration=WakeDuration;
   bool wakeFace = false, animationPending = false;
   bool idleBuddy = false;
   uint32_t activityAt = 0, idleEnteredAt = 0;
@@ -80,7 +81,7 @@ struct Ui {
   // A newly starting meeting gets one viewing window even if Feni was already idle.
   void wakeForMeeting(uint32_t now) { if(page==Page::Home && mode!=Mode::Clock) {facePhase=FacePhase::Awake;wakeFace=false;noteActivity(now);} }
   void update(uint32_t now) {
-    if(animating() && !animationPending && uint32_t(now-facePhaseAt)>=(facePhase==FacePhase::Startup?StartupDuration:WakeDuration)) facePhase=FacePhase::Awake;
+    if(animating() && !animationPending && uint32_t(now-facePhaseAt)>=(facePhase==FacePhase::Startup?startupDuration:wakeDuration)) facePhase=FacePhase::Awake;
     if(!idleBuddy && uint32_t(now-activityAt)>=IdleTimeout) {
       page=Page::Home;choice=0;peek=false;idleBuddy=true;idleEnteredAt=now;
       reminder=false;timerDone=false;customInvalid=false;

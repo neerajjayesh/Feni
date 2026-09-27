@@ -1,5 +1,8 @@
 # Windows PC companion
 
+For custom animations and configurable app rules, use [Feni Studio](STUDIO.md).
+It replaces this legacy PowerShell companion. Do not run both at the same time.
+
 Feni v3.3.0 reacts to the foreground app on a Windows PC. Gaming adds a small
 headset and microphone around the centered square eyes; coding adds brackets
 and a blinking cursor. A new connection plays flowing lightning symbols with

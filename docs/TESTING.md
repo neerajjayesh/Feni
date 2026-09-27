@@ -1,5 +1,32 @@
 # Build and verification
 
+## Feni Studio / v3.4.0
+
+Firmware builds for ESP8266 core 3.1.2 with the second IRAM heap and the explicit
+4 MB flash / 1 MB filesystem layout. Host tests include FNA1 header/frame bounds,
+palette indices, truncation and byte-for-byte compatibility with a clip produced
+by the Windows packer. Studio's self-test covers rule priority, disabled rules,
+foreground/background matching, custom slots, local destination validation,
+PNG packing, preview colour rendering and malformed file rejection.
+
+Live NodeMCU tests exercised the production .NET HTTP client, session-token
+exchange, multipart upload, playback and removal. Device tests covered rejected
+unauthenticated, malformed and empty uploads; preservation of the prior clip;
+custom PC slots; and menu/white-clock priority during custom playback.
+Framebuffer captures confirmed uploaded palette colours and a grayscale clock.
+Calendar HTTPS synced with animation storage mounted, while the saved Purple
+theme and Auto mode remained unchanged. The display framebuffer is released
+during the existing HTTPS drawing pause and recreated afterwards to preserve
+certificate-validation memory.
+
+The Windows interface was inspected at 125% scaling. The onboard FLASH electrical
+input and real game/editor launches were not automated; tests inject the same
+gesture/activity paths, with rule matching tested separately. Maximum-rate,
+maximum-size clips are hardware-dependent; use simple short artwork and preview
+it on your own display.
+
+## Earlier firmware verification
+
 The v3.2.0 firmware was compiled for ESP8266 core 3.1.2 and tested on a NodeMCU
 with the documented ST7735 wiring. Live HTTPS Calendar syncs include Google event colours. The v3.1.1 baseline
 remains available as a tag.

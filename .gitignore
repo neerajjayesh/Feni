@@ -13,3 +13,4 @@ secrets.h
 CONNECTION.md
 pc/config.json
 pc/status.json
+studio/bin/

@@ -52,6 +52,7 @@ void sampleControls() {
 }
 
 #include "Calendar.h"
+#include "Animations.h"
 #include "Display.h"
 #include "Page.h"
 #include "Services.h"
@@ -68,12 +69,12 @@ void setup() {
   if(settings.deployment[0]) calendarMessage="Waiting for first sync";
   if(settings.wledIp[0]) wledMessage="Hold a preset to apply";
   configTime(settings.timezone,"pool.ntp.org","time.google.com");
-  ui.beginStartup(millis());startNetwork();renderUi(millis());
+  beginAnimationStorage();ui.beginStartup(millis());startNetwork();renderUi(millis());
   // This callback only samples controls and changes RAM state. No I/O, delay or flash writes.
   // It runs at network yields as well, retaining gestures during HTTPS requests.
   if(!schedule_recurrent_function_us([](){ sampleControls();return true; },10000))
     Serial.println(F("Warning: background input sampler unavailable"));
-  Serial.println(F("FeniBuddy 3.3.0 ready. STATUS for diagnostics."));
+  Serial.println(F("FeniBuddy 3.4.0 ready. STATUS for diagnostics."));
 }
 
 void loop() {

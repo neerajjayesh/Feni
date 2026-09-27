@@ -1,5 +1,18 @@
 # Changelog
 
+## 3.4.0
+
+- Add Feni Studio for Windows with animation preview, PNG frame packing,
+  persistent assignments and uploads over local Wi-Fi.
+- Store startup, PC connected, sleep, wake, gaming, coding, idle and eight custom
+  animation slots on Feni, with built-in fallbacks for unassigned slots.
+- Add ordered app rules, foreground/background matching, executable selection,
+  automatic reconnection and tray/sign-in operation.
+- Validate FNA1 files before replacing stored clips; retain the white clock,
+  existing menus, settings and unknown filesystem contents.
+- Share framebuffer RAM with Calendar HTTPS to fit ESP8266 memory; explicitly
+  select the 4 MB flash / 1 MB filesystem partition in the build helper.
+
 ## 3.3.0
 
 - Add centered startup and wake animations, with sleep after five minutes idle.
