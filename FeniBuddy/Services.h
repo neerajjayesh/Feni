@@ -13,10 +13,10 @@ char wledVerifyIp[16]={},wledVerifyName[21]={};
 String asJson(JsonDocument &doc) {String output;serializeJson(doc,output);return output;}
 String statusJson() {
   DynamicJsonDocument doc(4096);
-  doc["name"]="Feni";doc["firmware"]="feni-buddy-3.4.0";
+  doc["name"]="Feni";doc["firmware"]="feni-buddy-3.5.0";
   doc["sleeping"]=ui.sleeping();doc["facePhase"]=int(ui.facePhase);doc["sleepAfterSeconds"]=buddy::Ui::SleepTimeout/1000;
   doc["pcConnected"]=pc.connected;doc["pcActivity"]=int(pc.activity);doc["pcIntro"]=pc.introPlaying;
-  doc["pcAnimation"]=pc.customSlot;doc["animationSlot"]=clipPlayer.slot;
+  doc["pcAnimation"]=pc.customSlot;doc["animationSlot"]=activeCodeSlot;
   doc["wifi"]=ui.online;doc["setup"]=apActive;doc["ip"]=WiFi.localIP().toString();doc["networkMessage"]=networkMessage;
   doc["ssid"]=settings.ssid;doc["mode"]=int(ui.mode);doc["page"]=int(ui.page);doc["choice"]=ui.choice;doc["menu"]=ui.menu;
   doc["theme"]=ui.theme;doc["meetingActive"]=ui.meetingActive;doc["meetingVisible"]=ui.showMeeting();doc["meetingSeconds"]=meetingIndex>=0 ? events[meetingIndex].end-epochNow() : 0;
@@ -192,7 +192,7 @@ void pollWledVerification() {
   if(wledVerifyTries>=4) {wledMessage="Preset not confirmed";wledVerifyPending=false;}
 }
 void sendPage() {server.sendHeader("Cache-Control","no-store");server.send_P(200,"text/html; charset=utf-8",BUDDY_PAGE);}
-#include "AnimationServices.h"
+#include "CodeServices.h"
 void startNetwork() {
   char token[33];snprintf(token,sizeof(token),"%08x%08x%08x%08x",os_random(),os_random(),os_random(),os_random());csrfToken=token;
   WiFi.persistent(false);WiFi.mode(WIFI_STA);WiFi.hostname("feni");WiFi.setAutoReconnect(true);
@@ -201,7 +201,7 @@ void startNetwork() {
   if(settings.ssid[0]) {WiFi.begin(settings.ssid,settings.password);wifiAttemptAt=millis();networkMessage="Connecting to saved Wi-Fi";}
   else startPortal();
   server.collectHeaders("X-Feni-Token");
-  registerAnimationRoutes();
+  registerCodeRoutes();
   server.on("/",HTTP_GET,sendPage);
   server.on("/session",HTTP_GET,[](){server.sendHeader("Cache-Control","no-store");server.send(200,"text/plain",csrfToken);});
   server.on("/status",HTTP_GET,[](){server.sendHeader("Cache-Control","no-store");server.send(200,"application/json",statusJson());});
@@ -209,7 +209,7 @@ void startNetwork() {
     if(!authorizeWrite(false)) return;
     uint32_t activity;
     if(!numberArg("activity",activity)||activity>3) {server.send(400,"text/plain","Invalid activity");return;}
-    if(activity==3){uint32_t slot;if(!numberArg("animation",slot)||slot<7||slot>=buddy::AnimationSlots){server.send(400,"text/plain","Invalid custom animation");return;}pc.customSlot=slot;}
+    if(activity==3){uint32_t slot;if(!numberArg("animation",slot)||slot<7||slot>=CodeSlots){server.send(400,"text/plain","Invalid custom animation");return;}pc.customSlot=slot;}
     pc.receive(static_cast<buddy::PcActivity>(activity),millis());server.send(200,"text/plain","OK");
   });
   server.on("/wifi",HTTP_POST,receiveWifi);server.on("/settings",HTTP_POST,receiveSettings);

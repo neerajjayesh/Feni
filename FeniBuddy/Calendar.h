@@ -105,17 +105,11 @@ bool fetchCalendarBody(BoundedBody &body) {
   }
   calendarMessage="Too many calendar redirects";return false;
 }
-void releaseAnimationFrame();
-void restoreAnimationFrame();
 void pollCalendar() {
   if(!ui.online || !settings.deployment[0] || !settings.calendarKey[0]) return;
   if(!epochNow()) {calendarMessage="Waiting for clock sync";return;}
   if(calendarAttempted && millis()-calendarAttemptAt<120000) return;
   calendarAttempted=true;calendarAttemptAt=millis();
-  // Drawing is paused during HTTPS; the TFT retains its pixels. Reuse framebuffer
-  // RAM for certificate validation, then restore it before the next render.
-  releaseAnimationFrame();
-  struct RestoreFrame {~RestoreFrame(){restoreAnimationFrame();}} restoreFrame;
   // BearSSL automatically puts its full-size TLS buffers in the secondary IRAM
   // heap. Keep enough DRAM for the TLS stack, certificate validation and JSON.
   bool memoryReady=ESP.getFreeHeap()>=32000 && ESP.getMaxFreeBlockSize()>=18000;

@@ -68,15 +68,14 @@ void drawPcOverlay() {buddy::drawPcDetails(canvas,pc,millis());}
 void renderUi(uint32_t now) {
   static uint32_t lastFrame=0,nextMood=0;
   static bool specialWasVisible=false;
-  if(now-lastFrame<(clipPlayer.slot>=0?5u:40u))return;lastFrame=now;
-  if(!canvas.ensureFrame())return;
+  if(now-lastFrame<40)return;lastFrame=now;
   canvas.beforeDisplay=nullptr;
   bool face=ui.page==buddy::Page::Home && (ui.online || ui.idleBuddy || ui.sleeping() || ui.animating() || ui.wakeFace) && !ui.showClock() && !ui.showMeeting() && !ui.timerDone && !ui.reminder;
   pc.update(now,face && !ui.sleeping() && !ui.animating());
   canvas.palette(buddy::accent(ui.theme),face);
   if(face){
     ui.startFaceFrame(now);
-    if(clipPlayer.draw(desiredClip(now),now)) {
+    if(drawCodeAnimation(now)) {
       if(!buddyFaceVisible)buddyFaceAt=now;buddyFaceVisible=true;specialWasVisible=true;frameContainsPassword=false;return;
     }
     canvas.palette(buddy::accent(ui.theme),true);
@@ -94,7 +93,7 @@ void renderUi(uint32_t now) {
     if(int32_t(now-nextMood)>=0){eyes.setMood(random(4)==0?HAPPY:DEFAULT);nextMood=now+random(7000,15000);}
     buddyFaceVisible=true;canvas.beforeDisplay=drawPcOverlay;eyes.update();canvas.beforeDisplay=nullptr;frameContainsPassword=false;return;
   }
-  clipPlayer.stop();buddyFaceVisible=false;canvas.clearDisplay();frameContainsPassword=ui.page==buddy::Page::WifiPassword;
+  activeCodeSlot=-1;buddyFaceVisible=false;canvas.clearDisplay();frameContainsPassword=ui.page==buddy::Page::WifiPassword;
   if(ui.timerDone){canvas.fillRect(4,29,152,63,2);canvas.center(43,"TIME IS UP",2,0);footer("Double tap to go back");}
   else if(ui.reminder)eventCard(reminderEvent,true);
   else if(ui.page==buddy::Page::Home){if(ui.showClock())clockScreen();else if(ui.showMeeting() && meetingIndex>=0)eventCard(events[meetingIndex],false,true);else setupScreen();}

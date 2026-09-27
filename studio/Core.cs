@@ -1,7 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Drawing;
-using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -21,8 +19,9 @@ namespace FeniStudio {
     }
     public class StudioConfig {
         public string Url="http://feni.local";
-        public string Folder="";
-        public string[] Files=new string[15];
+        public string ArduinoCli=FirmwareBuilder.DefaultCli;
+        public string FirmwareFolder=Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"firmware","FeniBuddy");
+        public string Port="COM8";
         public List<AppRule> Rules=new List<AppRule> {
             new AppRule {Name="Coding",Applications="Code, Code - Insiders, devenv, idea64, pycharm64",Slot=5},
             new AppRule {Name="Gaming",Applications="steam, steamwebhelper, EpicGamesLauncher, Battle.net, Playnite.DesktopApp",Slot=4}
@@ -32,7 +31,7 @@ namespace FeniStudio {
         public static readonly string ConfigPath=Path.Combine(DirectoryPath,"config.json");
         public static StudioConfig Load() {
             StudioConfig c=File.Exists(ConfigPath)?new JavaScriptSerializer().Deserialize<StudioConfig>(File.ReadAllText(ConfigPath)):new StudioConfig();
-            if(c==null||c.Files==null||c.Files.Length!=15||c.Rules==null)throw new InvalidDataException("Invalid Feni Studio configuration. Your file has been preserved at "+ConfigPath);
+            if(c==null||c.Rules==null)throw new InvalidDataException("Invalid Feni Studio configuration. Your file has been preserved at "+ConfigPath);
             if(!File.Exists(ConfigPath)) {
                 string old=Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"FeniPcCompanion","config.json");
                 if(File.Exists(old))try {
@@ -65,71 +64,6 @@ namespace FeniStudio {
         }
         public static string Normalize(string name) {return Path.GetFileNameWithoutExtension((name??"").Trim()+((name??"").Trim().EndsWith(".exe",StringComparison.OrdinalIgnoreCase)?"":".exe")).ToLowerInvariant();}
     }
-    public class FnaClip {
-        public const int Width=160,Height=128,MaxBytes=524288;
-        public byte[] Data;public int Fps,Frames;public ushort[] Palette=new ushort[16];public int[] Offsets;
-        public double Seconds {get{return (double)Frames/Fps;}}
-        static ushort U16(byte[] d,int p){return (ushort)(d[p]|d[p+1]<<8);}
-        static uint U32(byte[] d,int p){return (uint)(U16(d,p)|(uint)U16(d,p+2)<<16);}
-        public static FnaClip Load(string path) {
-            var info=new FileInfo(path);if(info.Length<55||info.Length>MaxBytes)throw new InvalidDataException("Use a FNA1 clip up to 512 KiB.");
-            return Parse(File.ReadAllBytes(path));
-        }
-        public static FnaClip Parse(byte[] data) {
-            if(data.Length<55||data.Length>MaxBytes||System.Text.Encoding.ASCII.GetString(data,0,4)!="FNA1"||U16(data,4)!=160||U16(data,6)!=128||U32(data,12)!=0)throw new InvalidDataException("Expected a 160 x 128 FNA1 animation.");
-            var c=new FnaClip {Data=data,Fps=U16(data,8),Frames=U16(data,10)};
-            if(c.Fps<1||c.Fps>20||c.Frames<1||c.Frames>300||c.Frames>c.Fps*30)throw new InvalidDataException("Use 1-20 fps, at most 300 frames and 30 seconds.");
-            for(int i=0;i<16;i++)c.Palette[i]=U16(data,16+i*2);
-            c.Offsets=new int[c.Frames];int p=48;
-            for(int f=0;f<c.Frames;f++) {
-                if(p+4>data.Length)throw new InvalidDataException("Truncated frame.");
-                uint n=U32(data,p);p+=4;c.Offsets[f]=p;
-                if(n==0||n%3!=0||n>61440||p+n>data.Length)throw new InvalidDataException("Invalid frame size.");
-                int pixels=0,end=p+(int)n;
-                while(p<end){int run=U16(data,p);if(run==0||data[p+2]>15||pixels+run>20480)throw new InvalidDataException("Invalid frame run.");pixels+=run;p+=3;}
-                if(pixels!=20480)throw new InvalidDataException("Incomplete frame.");
-            }
-            if(p!=data.Length)throw new InvalidDataException("Trailing animation data.");return c;
-        }
-        public Bitmap Render(int frame) {
-            var bitmap=new Bitmap(160,128,PixelFormat.Format24bppRgb);var rect=new Rectangle(0,0,160,128);
-            var bits=bitmap.LockBits(rect,ImageLockMode.WriteOnly,PixelFormat.Format24bppRgb);byte[] rgb=new byte[bits.Stride*128];int at=0,p=Offsets[frame%Frames];
-            while(at<20480) {
-                int n=U16(Data,p);ushort colour=Palette[Data[p+2]];p+=3;
-                byte r=(byte)((colour>>11)*255/31),g=(byte)(((colour>>5)&63)*255/63),b=(byte)((colour&31)*255/31);
-                for(int i=0;i<n;i++,at++){int x=(at/160)*bits.Stride+(at%160)*3;rgb[x]=b;rgb[x+1]=g;rgb[x+2]=r;}
-            }
-            Marshal.Copy(rgb,0,bits.Scan0,rgb.Length);bitmap.UnlockBits(bits);return bitmap;
-        }
-        public static void Pack(string folder,string output,int fps) {
-            if(fps<1||fps>20)throw new InvalidDataException("Choose 1-20 fps.");
-            string[] paths=Directory.GetFiles(folder,"*.png").OrderBy(p=>Path.GetFileName(p),StringComparer.OrdinalIgnoreCase).ToArray();
-            if(paths.Length<1||paths.Length>300||paths.Length>fps*30)throw new InvalidDataException("Use numbered PNGs, at most 300 frames / 30 seconds.");
-            long[] histogram=new long[65536];
-            foreach(string p in paths)using(var b=new Bitmap(p)) {
-                if(b.Width!=160||b.Height!=128)throw new InvalidDataException(Path.GetFileName(p)+" must be exactly 160 x 128.");
-                for(int y=0;y<128;y++)for(int x=0;x<160;x++){Color q=b.GetPixel(x,y);histogram[To565(q)]++;}
-            }
-            ushort[] palette=Enumerable.Range(0,65536).OrderByDescending(i=>histogram[i]).Take(16).Select(i=>(ushort)i).ToArray();
-            byte[] nearest=new byte[65536];
-            for(int c=0;c<65536;c++)if(histogram[c]>0) {
-                int best=int.MaxValue;
-                for(int i=0;i<16;i++){int dr=(c>>11)-(palette[i]>>11),dg=((c>>5)&63)-((palette[i]>>5)&63),db=(c&31)-(palette[i]&31);int d=4*dr*dr+dg*dg+4*db*db;if(d<best){best=d;nearest[c]=(byte)i;}}
-            }
-            using(var memory=new MemoryStream())using(var w=new BinaryWriter(memory)) {
-                w.Write(System.Text.Encoding.ASCII.GetBytes("FNA1"));w.Write((ushort)160);w.Write((ushort)128);w.Write((ushort)fps);w.Write((ushort)paths.Length);w.Write(0u);foreach(ushort c in palette)w.Write(c);
-                foreach(string p in paths)using(var b=new Bitmap(p))using(var frame=new MemoryStream())using(var fw=new BinaryWriter(frame)) {
-                    int previous=-1,count=0;
-                    for(int y=0;y<128;y++)for(int x=0;x<160;x++){int next=nearest[To565(b.GetPixel(x,y))];if(next==previous)count++;else{if(count>0){fw.Write((ushort)count);fw.Write((byte)previous);}previous=next;count=1;}}
-                    fw.Write((ushort)count);fw.Write((byte)previous);fw.Flush();w.Write((uint)frame.Length);w.Write(frame.ToArray());
-                    if(memory.Length>MaxBytes)throw new InvalidDataException("Clip exceeds 512 KiB. Use fewer frames or simpler artwork.");
-                }
-                byte[] data=memory.ToArray();Parse(data);string temp=output+".new";File.WriteAllBytes(temp,data);
-                if(File.Exists(output))File.Replace(temp,output,null);else File.Move(temp,output);
-            }
-        }
-        static ushort To565(Color c) {int r=c.R*c.A/255,g=c.G*c.A/255,b=c.B*c.A/255;return (ushort)((r>>3)<<11|(g>>2)<<5|b>>3);}
-    }
     public class DeviceClient : IDisposable {
         readonly HttpClient http;string token="";public string Url;
         public DeviceClient(string url) {
@@ -146,13 +80,6 @@ namespace FeniStudio {
                 await Token();using(var req=new HttpRequestMessage(HttpMethod.Post,Url+path)){req.Headers.Add("X-Feni-Token",token);req.Content=new FormUrlEncodedContent(values);
                     using(var response=await http.SendAsync(req)){string body=await response.Content.ReadAsStringAsync();if(response.StatusCode==HttpStatusCode.Forbidden){token="";continue;}if(!response.IsSuccessStatusCode)throw new IOException(body);return body;}}
             }throw new IOException("Feni restarted; try again.");
-        }
-        public async Task Upload(int slot,string path) {
-            var clip=FnaClip.Load(path);if(Slots.Event(slot)&&clip.Seconds>10)throw new InvalidDataException("Startup, connection and wake clips must be 10 seconds or shorter.");
-            await Token();using(var req=new HttpRequestMessage(HttpMethod.Post,Url+"/animations/upload?slot="+slot)) {
-                req.Headers.Add("X-Feni-Token",token);var content=new MultipartFormDataContent();content.Add(new ByteArrayContent(clip.Data),"file","animation.fna");req.Content=content;
-                using(var response=await http.SendAsync(req)){string body=await response.Content.ReadAsStringAsync();if(response.StatusCode==HttpStatusCode.Forbidden)token="";if(!response.IsSuccessStatusCode)throw new IOException(body);}
-            }
         }
         public void Dispose(){http.Dispose();}
     }

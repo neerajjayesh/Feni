@@ -1,0 +1,52 @@
+FENI STUDIO - ANIMATION CODE
+
+Select a behaviour under Animation code. Paste C++ drawing code or Import code
+from a .cpp, .h or .txt file. Save code. Blank code keeps the built-in animation.
+Under Build & flash, choose Arduino CLI and Feni's USB COM port. Check / build
+verifies the code; Build & flash compiles and uploads it. A failed build never
+flashes the device. Test installed code previews what is already on Feni;
+saving alone does not change the device.
+
+Your code is the BODY of a drawing function, not a complete Arduino sketch.
+Do not include setup(), loop(), includes or outer function declarations.
+Available variables:
+  canvas  - Feni's Adafruit_GFX-compatible 160 x 128 drawing surface
+  elapsed - uint32_t milliseconds since entering this behaviour
+  now     - uint32_t device uptime in milliseconds
+
+Canvas colours: 0 black, 1 eye/theme colour, 2 accent, 3 dim accent.
+Use these palette indices, not RGB565 values. The clock remains white.
+The surface is cleared before each call and displayed afterwards.
+Draw one update and return. Avoid delay(), blocking loops, networking, flash
+writes and heap-heavy objects. Return false to request the built-in fallback;
+normal completion uses your drawing.
+
+Example:
+int height = (elapsed % 4000 < 150) ? 4 : 38;
+canvas.fillRoundRect(36, 64-height/2, 34, height, 6, 1);
+canvas.fillRoundRect(90, 64-height/2, 34, height, 6, 1);
+
+Use Adafruit_GFX methods such as drawLine(), fillRect(), fillCircle() and
+fillRoundRect(). Feni also provides canvas.text(x,y,"text",size,colour),
+canvas.center(y,"text",size,colour), canvas.small(x,y,"text",colour).
+Keep the eyes centered at the existing positions.
+
+Startup, PC connected and wake have an event duration of 100-10000 milliseconds.
+Sleeping, gaming, coding, idle and custom behaviours run while that state is
+active. Use elapsed % period for repeating motion. Static locals persist across
+visits; prefer elapsed for restarting animation timing. Menus, the white clock,
+timer alarms and Calendar alerts retain priority. Preview lasts up to 12 seconds;
+event previews repeat for inspection.
+
+Requires Arduino CLI, ESP8266 core 3.1.2 and the libraries in the repository's
+installation guide. Studio bundles firmware source. Each build makes a separate
+copy containing the generated CustomAnimations.h; source files are not modified.
+Compiler errors identify behaviour-0.cpp through behaviour-14.cpp in list order.
+Application rules still choose the installed behaviours over local Wi-Fi.
+
+Code:     %LOCALAPPDATA%\FeniStudio\animations-code.json
+Settings: %LOCALAPPDATA%\FeniStudio\config.json
+Builds:   %LOCALAPPDATA%\FeniStudio\builds
+
+Your C++ becomes firmware. Compilation cannot detect every runtime bug. If code
+causes resets, clear that behaviour to Built-in and flash again through USB.

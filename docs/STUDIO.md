@@ -1,88 +1,96 @@
 # Feni Studio
 
-Feni Studio is a native Windows application for your own animation files and app
-reactions. It runs on Windows 10/11 with .NET Framework 4.7.2 or newer. No Python
-or video player is needed. Use firmware v3.4.0 or later on Feni.
+Studio manages **C++ animation code**, USB builds and application reactions for
+Feni v3.5.0. It runs on Windows 10/11 with .NET Framework 4.7.2 or newer. There is
+no video/frame library, PNG packer or animation-file upload workflow.
 
 ## Install
 
-From a PowerShell terminal in the repository:
+From PowerShell in the repository:
 
 ```powershell
 .\studio\Install.ps1
 ```
 
-The script builds the app with the Windows .NET Framework compiler and installs
-it in `%LOCALAPPDATA%\FeniStudio\app`. It creates desktop and Start menu shortcuts
-and starts the app in the notification area at sign-in. Use `-NoStartup` to omit
-automatic startup. Closing the window keeps reactions running; use **Quit** in
-the notification-area menu to stop them.
+The installer builds Studio, bundles the firmware source and creates desktop,
+Start menu and sign-in shortcuts. Use `-NoStartup` to omit sign-in startup.
+Closing the window keeps app reactions running in the notification area; use
+its **Quit** command to stop. Studio replaces the legacy PowerShell companion.
+Existing app rules and the saved device address are preserved on upgrade.
+Old animation files are not deleted; the new firmware does not use them.
 
-The installer stops the old Feni PC Companion and backs up its startup shortcut.
-Studio imports its device address and gaming/coding mappings on first launch.
-Do not run both companions together. Preferences are stored in
-`%LOCALAPPDATA%\FeniStudio\config.json`; your animation files stay in your folder.
+## Edit a behaviour
 
-## Prepare your animations
+1. Select **Animation code**, then Startup, PC connected, Sleeping, Wake from
+   sleep, Gaming, Coding, Idle buddy or Custom 1–8.
+2. Paste your C++ drawing code or **Import code** from a `.cpp`, `.h` or `.txt` file.
+3. **Save code** (Ctrl+S). Switching behaviours also saves your current draft.
+4. Set an event duration for startup, PC connected and wake: 100–10000 ms.
+5. **Build & flash** applies the saved code to the device.
 
-1. Make your animation in your preferred editor, including MP4 if convenient.
-2. Export numbered **160 x 128 PNG frames** with zero-padded filenames such as
-   `0001.png`, `0002.png`. Use a separate folder for each clip.
-3. In **Library > Pack PNG frames**, select those frames, choose the frame rate
-   and save the resulting `.fna` file in your chosen animation library folder.
-4. Select **Choose folder** to browse your library. **Rescan** picks up new files.
-   Select a clip to preview it.
+The editor accepts a drawing function body, not a complete sketch. Studio wraps
+it in the correct behaviour callback. Available variables are `canvas`,
+`elapsed` (milliseconds since entering the behaviour) and `now` (device uptime).
+The surface is cleared before each call and displayed afterwards.
 
-Studio accepts `.fna` clips and packs PNG sequences; it does not decode MP4
-directly. Export from your video editor or use the FFmpeg example in the
-[format guide](../studio/Animation%20format.txt).
+```cpp
+int height = (elapsed % 4000 < 150) ? 4 : 38;
+canvas.fillRoundRect(36, 64-height/2, 34, height, 6, 1);
+canvas.fillRoundRect(90, 64-height/2, 34, height, 6, 1);
+```
 
-Use flat colours for compact clips. The packer chooses a shared 16-colour RGB565
-palette, so gradients and photographic footage lose detail. Transparency becomes
-black. Start at 10â€“15 fps. Limits are 1â€“20 fps, 300 frames, 30 seconds, and 512 KiB
-per clip. Startup, PC connected and wake clips must be 10 seconds or shorter.
-Actual frame rate depends on display and flash access; network operations can
-briefly pause playback.
+Draw one update and return; use elapsed time instead of delays or blocking loops.
+Canvas colours are indices: 0 black, 1 eye/theme colour, 2 accent, 3 dim accent.
+Adafruit_GFX drawing methods and Feni text helpers are supported. See the
+[code guide](../studio/Code%20guide.txt) for the complete contract.
 
-## Connect and assign
+Blank code keeps the existing coded animation. **Use built-in** clears the local
+replacement; flash afterwards to apply it. A `return false;` in your code also
+requests the built-in fallback. Gaming, coding, idle, sleep and custom code run
+while their behaviour is active; use `elapsed % period` to repeat motion.
 
-1. Connect the PC and Feni to the same local network.
-2. Under **Device**, enter `http://feni.local` or Feni's private LAN IP, then
-   **Connect / refresh**. The storage readout shows the shared device capacity.
-3. Under **Animations**, select a behaviour, choose **Assign file**, then
-   **Send selected**. **Send all assigned** uploads every local assignment.
-4. **Test on Feni** previews an installed clip for up to 12 seconds.
+**Test installed code** previews the behaviour already compiled into Feni for up
+to 12 seconds. It does not run unsaved edits or execute ESP8266 code on Windows.
+Menus, alerts and the white clock keep priority. Startup, sleep and wake also
+work when the PC is off.
 
-Saving an assignment only updates this PC. Uploads are copies. Empty local
-assignments do not erase clips already on the device. **Restore built-in** removes
-only the selected device clip and retains the local file.
+## Build and flash
 
-Startup, PC connected and wake play once. Sleep, gaming, coding, idle and custom
-clips loop while that state is active. Menus, timers, meeting alerts and the
-white clock keep priority. The first press while sleeping wakes Feni; double tap
-opens the clock from Home. Uploaded artwork keeps its own colours; theme changes
-apply to the built-in face and menus.
+Install Arduino CLI, ESP8266 core 3.1.2 and the libraries listed in
+[Installation](INSTALLATION.md). In **Build & flash**, select the bundled
+`FeniBuddy` source folder, Arduino CLI executable and Feni's USB COM port.
 
-Clips persist in LittleFS through reboot and ordinary firmware uploads. Device
-startup/sleep/wake animations work without the PC. App reactions need Studio
-running. On a new device, firmware initializes only an entirely erased storage
-partition. If storage is unavailable, existing unknown contents are preserved;
-back them up before intentionally preparing a LittleFS partition.
+- **Check / build** compiles without changing Feni.
+- **Build & flash** compiles first, then uploads only when compilation succeeds.
+- Compiler output identifies `behaviour-0.cpp` through `behaviour-14.cpp` in the
+  behaviour list order. The Device tab shows installed and saved code revisions.
+
+Each build uses a separate copy of the firmware with a generated
+`CustomAnimations.h`. The source folder is not edited. Ordinary USB uploads retain
+Wi-Fi, Calendar and other saved settings. Code must be reflashed after changes;
+app-rule changes work immediately after saving and use local Wi-Fi.
+
+Native C++ can compile yet contain runtime bugs. If a replacement causes resets,
+clear that behaviour to built-in and flash again using USB.
 
 ## Application rules
 
-In **App rules**, add a rule, choose executable names, select **Foreground** or
-**Running**, and choose gaming, coding, idle or Custom 1â€“8. **Choose app .exe** and
-**Running apps** help fill executable names. Multiple names may be comma-separated.
+Select **App rules** to add executable names, choose **Foreground** or **Running**,
+and assign Gaming, Coding, Idle or Custom 1–8. The first enabled matching rule
+wins; Move up/down changes priority. Names may be comma-separated. Choose app
+`.exe` and Running apps help fill them. Save rules when done.
 
-The first enabled matching rule wins; **Move up/down** changes priority. Foreground
-uses the app you are currently using. Running also matches background processes,
-so a launcher left open can keep its animation active. Add each game's actual
-executable if you want it to match after the launcher loses focus. Save your rules.
-With no match, the idle buddy is used. Studio sends only the resulting activity
-and slot number to Feni, not the PC's process list or window contents.
+Foreground follows the app being used. Running also matches background processes,
+so a launcher left open can keep a reaction active. Add individual game executable
+names if needed. No match selects Idle buddy. Only the resulting behaviour number
+is sent to Feni; the process list and window contents stay on the PC.
 
-## Build and verify
+## Files and verification
+
+- App: `%LOCALAPPDATA%\FeniStudio\app`
+- Code/durations: `%LOCALAPPDATA%\FeniStudio\animations-code.json`
+- Preferences: `%LOCALAPPDATA%\FeniStudio\config.json`
+- Isolated build outputs: `%LOCALAPPDATA%\FeniStudio\builds`
 
 ```powershell
 .\studio\Build.ps1
@@ -91,6 +99,6 @@ if ($test.ExitCode -ne 0) { throw 'Studio tests failed' }
 Get-Content "$env:TEMP\feni-studio-tests.txt"
 ```
 
-The [binary format guide](../studio/Animation%20format.txt) documents FNA1 for
-independent converters. There are no bundled replacement animations; supply
-your own artwork or keep the firmware's built-in animations.
+The self-test also writes a generated C++ fixture covering all 15 callbacks for
+compilation with a host C++ compiler. No user animation code is bundled in the
+repository; the defaults keep Feni's original coded face and reactions.

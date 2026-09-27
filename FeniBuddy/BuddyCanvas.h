@@ -4,18 +4,15 @@
 #include <Fonts/FreeSansBold18pt7b.h>
 #include <Fonts/FreeSansBold24pt7b.h>
 #include "Theme.h"
-// 4-bit framebuffer: 10 KB. Built-in UI retains its four indices; clips use 16 colours.
+// 2-bit framebuffer: 5 KB, with row accents for event cards. TLS retains its IRAM heap.
 class BuddyCanvas : public Adafruit_GFX {
  public:
   explicit BuddyCanvas(Adafruit_ST7735 &panel) : Adafruit_GFX(160,128), panel_(panel) {}
   uint32_t frames=0;
   void (*beforeDisplay)()=nullptr;
   uint16_t ink=0xffff;
-  bool ensureFrame() {if(!pixels_)pixels_=static_cast<uint8_t*>(calloc(10240,1));return pixels_!=nullptr;}
-  void releaseFrame() {free(pixels_);pixels_=nullptr;}
   static constexpr size_t BmpBytes=61494;
   void palette(uint16_t accent, bool face=false) {
-    customPalette_=false;
     ink=face ? accent : 0xffff;
     for(int y=0;y<128;++y) { accents_[y]=accent; shades_[y]=buddy::shade(accent); }
   }
@@ -23,20 +20,15 @@ class BuddyCanvas : public Adafruit_GFX {
     for(int i=max(0,y);i<min(128,y+height);++i) { accents_[i]=colour; shades_[i]=buddy::shade(colour); }
   }
   void drawPixel(int16_t x,int16_t y,uint16_t colour) override {
-    if(!pixels_ || x<0 || y<0 || x>=160 || y>=128) return;
-    uint8_t shift=(1-(x&1))*4, &pixel=pixels_[y*80+x/2];
-    pixel=(pixel&~(15<<shift))|((colour&15)<<shift);
+    if(x<0 || y<0 || x>=160 || y>=128) return;
+    uint8_t shift=(3-(x&3))*2, &pixel=pixels_[y*40+x/4];
+    pixel=(pixel&~(3<<shift))|((colour&3)<<shift);
   }
-  uint8_t pixel(int x,int y) const { return pixels_ ? (pixels_[y*80+x/2]>>((1-(x&1))*4))&15 : 0; }
-  void animationPalette(const uint16_t *colours) {memcpy(clipColours_,colours,sizeof(clipColours_));customPalette_=true;}
-  void animationRun(uint32_t at,uint16_t count,uint8_t colour) {
-    while(count--){uint8_t shift=(1-(at&1))*4;pixels_[at/2]=(pixels_[at/2]&~(15<<shift))|(colour<<shift);++at;}
-  }
+  uint8_t pixel(int x,int y) const { return (pixels_[y*40+x/4]>>((3-(x&3))*2))&3; }
   uint16_t colourAt(int x,int y) const {
-    if(customPalette_)return clipColours_[pixel(x,y)];
     switch(pixel(x,y)) { case 1:return ink;case 2:return accents_[y];case 3:return shades_[y];default:return 0; }
   }
-  void fillScreen(uint16_t colour) override { if(pixels_)memset(pixels_,(colour&15)*0x11,10240); }
+  void fillScreen(uint16_t colour) override { memset(pixels_,(colour&3)*0x55,sizeof(pixels_)); }
   void clearDisplay() { fillScreen(0); }
   void font(uint8_t size=1) {
     setTextSize(1);setTextWrap(false);
@@ -80,9 +72,7 @@ class BuddyCanvas : public Adafruit_GFX {
   }
  private:
   Adafruit_ST7735 &panel_;
-  uint8_t *pixels_=nullptr;
-  bool customPalette_=false;
-  uint16_t clipColours_[16]={};
+  uint8_t pixels_[5120]={};
   uint16_t accents_[128]={},shades_[128]={};
   alignas(4) uint16_t line_[160];
 };

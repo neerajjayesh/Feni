@@ -1,5 +1,16 @@
 # Changelog
 
+## 3.5.0
+
+- Replace frame-file management with a C++ editor for each animation behaviour.
+- Add code import, event durations, built-in fallback, source revisions and testing
+  of the animation code currently installed on Feni.
+- Build in isolated folders and flash through Arduino CLI over USB; compilation
+  failures stop before upload. Keep app rules and tray operation.
+- Remove PNG packing, FNA previews/uploads and filesystem playback. Restore the
+  small four-colour framebuffer and retain existing coded animations by default.
+- Preserve saved app rules and connection settings when upgrading Studio.
+
 ## 3.4.0
 
 - Add Feni Studio for Windows with animation preview, PNG frame packing,

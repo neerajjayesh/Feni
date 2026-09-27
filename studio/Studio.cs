@@ -4,53 +4,34 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
+using System.IO.Ports;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Web.Script.Serialization;
 using System.Windows.Forms;
-
 namespace FeniStudio {
-    class PreviewBox : PictureBox {
-        protected override void OnPaint(PaintEventArgs e){e.Graphics.InterpolationMode=System.Drawing.Drawing2D.InterpolationMode.NearestNeighbor;e.Graphics.PixelOffsetMode=System.Drawing.Drawing2D.PixelOffsetMode.Half;base.OnPaint(e);}
-    }
     class StudioForm : Form {
         static readonly Color Bg=Color.FromArgb(12,17,24),Card=Color.FromArgb(22,30,41),Ink=Color.FromArgb(231,237,244),Muted=Color.FromArgb(152,166,184),Accent=Color.FromArgb(70,214,224);
-        StudioConfig config;DeviceClient device;bool busy=false,quitting=false;
-        Label status,folderLabel,previewInfo,deviceInfo,ruleState;TextBox url;
-        ListBox library;DataGridView assignments,rules;BindingList<AppRule> ruleList;
-        PreviewBox preview;FnaClip clip;int previewFrame=0;string[] libraryPaths=new string[0];
-        readonly System.Windows.Forms.Timer playback=new System.Windows.Forms.Timer(),heartbeat=new System.Windows.Forms.Timer();
-        NotifyIcon tray;CheckBox enabled;TabControl tabs;
-        public StudioForm(StudioConfig c,bool hidden) {
-            config=c;Text="Feni Studio";BackColor=Bg;ForeColor=Ink;Font=new Font("Segoe UI",10);ClientSize=new Size(1180,730);MinimumSize=new Size(1040,650);StartPosition=FormStartPosition.CenterScreen;
-            AutoScaleMode=AutoScaleMode.Dpi;
-            var header=new Panel {Dock=DockStyle.Top,Height=90,Padding=new Padding(24,12,24,10)};
-            header.Controls.Add(new Label {Text="FENI STUDIO",Font=new Font("Segoe UI",23,FontStyle.Bold),AutoSize=true,Location=new Point(23,9),ForeColor=Accent});
-            header.Controls.Add(new Label {Text="Your animations. Your app reactions.",AutoSize=true,Location=new Point(26,53),ForeColor=Muted});Controls.Add(header);
-            var footer=new Panel {Dock=DockStyle.Bottom,Height=47,Padding=new Padding(24,12,20,8)};
-            status=new Label {Dock=DockStyle.Fill,Text="Ready. Choose an animation folder to begin.",ForeColor=Muted,AutoEllipsis=true};footer.Controls.Add(status);Controls.Add(footer);
-            var body=new TableLayoutPanel {Dock=DockStyle.Fill,Padding=new Padding(22,0,22,0),ColumnCount=2,RowCount=1};body.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,100));body.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute,320));Controls.Add(body);body.BringToFront();
-            tabs=new TabControl {Dock=DockStyle.Fill,Font=new Font("Segoe UI",10),Padding=new Point(15,10)};body.Controls.Add(tabs,0,0);
-            var side=new FlowLayoutPanel {Dock=DockStyle.Fill,FlowDirection=FlowDirection.TopDown,WrapContents=false,Padding=new Padding(18,8,0,0),BackColor=Bg};body.Controls.Add(side,1,0);
-            side.Controls.Add(new Label {Text="ANIMATION PREVIEW",AutoSize=true,ForeColor=Muted,Margin=new Padding(0,8,0,15)});
-            preview=new PreviewBox {Width=288,Height=230,SizeMode=PictureBoxSizeMode.Zoom,BackColor=Color.Black,Margin=new Padding(0,0,0,10)};side.Controls.Add(preview);
-            previewInfo=new Label {Width=288,Height=80,Text="Select a .fna file to preview it at Feni's 160 x 128 resolution.",ForeColor=Muted};side.Controls.Add(previewInfo);
-            side.Controls.Add(Button("Play / pause preview",delegate {playback.Enabled=!playback.Enabled;},270));
-            side.Controls.Add(new Label {Width=280,Height=98,ForeColor=Muted,Text="Prepare numbered 160 x 128 PNG frames, then use Pack PNG frames. Your original files stay in your chosen folder.",Margin=new Padding(0,22,0,0)});
-            side.Controls.Add(Button("Open format guide",delegate {OpenGuide();},270));
-            BuildLibrary();BuildAssignments();BuildRules();BuildDevice();
-            playback.Tick+=delegate {if(clip!=null){SetPreview(clip.Render(previewFrame++));previewFrame%=clip.Frames;}};
+        StudioConfig config;CodeProject project;DeviceClient device;string installedRevision="";bool busy=false,quitting=false;
+        Label status,deviceInfo,ruleState,codeHint;TextBox url,cliPath,firmwarePath;RichTextBox editor,buildLog;
+        ListBox behaviours;NumericUpDown duration;int editingSlot=-1;ComboBox ports;
+        DataGridView rules;BindingList<AppRule> ruleList;CheckBox enabled;TabControl tabs;NotifyIcon tray;
+        readonly System.Windows.Forms.Timer heartbeat=new System.Windows.Forms.Timer();
+        public StudioForm(StudioConfig c,bool hidden){
+            config=c;project=CodeProject.Load();Text="Feni Studio";BackColor=Bg;ForeColor=Ink;Font=new Font("Segoe UI",10);ClientSize=new Size(1180,730);MinimumSize=new Size(980,650);StartPosition=FormStartPosition.CenterScreen;AutoScaleMode=AutoScaleMode.Dpi;
+            var header=new Panel {Dock=DockStyle.Top,Height=90};header.Controls.Add(new Label {Text="FENI STUDIO",Font=new Font("Segoe UI",23,FontStyle.Bold),AutoSize=true,Location=new Point(23,9),ForeColor=Accent});header.Controls.Add(new Label {Text="Animation code and application reactions",AutoSize=true,Location=new Point(26,53),ForeColor=Muted});Controls.Add(header);
+            var footer=new Panel {Dock=DockStyle.Bottom,Height=45,Padding=new Padding(24,10,20,8)};status=new Label {Dock=DockStyle.Fill,Text="Choose a behaviour to edit its animation code.",ForeColor=Muted,AutoEllipsis=true};footer.Controls.Add(status);Controls.Add(footer);
+            tabs=new TabControl {Dock=DockStyle.Fill,Padding=new Point(16,10)};Controls.Add(tabs);tabs.BringToFront();BuildCode();BuildRules();BuildFirmware();BuildDevice();
             heartbeat.Interval=5000;heartbeat.Tick+=async delegate {await SendActivity();};heartbeat.Start();
             tray=new NotifyIcon {Icon=SystemIcons.Application,Text="Feni Studio",Visible=true};var menu=new ContextMenuStrip();menu.Items.Add("Open Feni Studio",null,delegate {ShowApp();});menu.Items.Add("Quit",null,delegate {quitting=true;Close();});tray.ContextMenuStrip=menu;tray.DoubleClick+=delegate {ShowApp();};
-            FormClosing+=delegate(object sender,FormClosingEventArgs e){if(!quitting && e.CloseReason==CloseReason.UserClosing){e.Cancel=true;Hide();status.Text="Running in the notification area.";}};
-            FormClosed+=delegate {tray.Dispose();playback.Dispose();heartbeat.Dispose();if(device!=null)device.Dispose();if(preview.Image!=null)preview.Image.Dispose();};
-            Shown+=async delegate {RefreshLibrary();if(hidden)Hide();busy=true;try{await Connect();}catch(Exception ex){status.Text="Offline: "+ex.Message;}finally{busy=false;}};
+            FormClosing+=delegate(object sender,FormClosingEventArgs e){if(busy){e.Cancel=true;status.Text="Wait for the current operation to finish before closing.";return;}try{SaveCode();}catch(Exception ex){e.Cancel=true;Error(ex);return;}if(!quitting&&e.CloseReason==CloseReason.UserClosing){e.Cancel=true;Hide();}};
+            FormClosed+=delegate {tray.Dispose();heartbeat.Dispose();if(device!=null)device.Dispose();};
+            Shown+=async delegate {if(hidden)Hide();busy=true;try{await Connect();}catch(Exception ex){status.Text="Offline: "+ex.Message;}finally{busy=false;}};
         }
         protected override void WndProc(ref Message m){if(m.Msg==Program.ShowMessage)ShowApp();base.WndProc(ref m);}
         void ShowApp(){Show();WindowState=FormWindowState.Normal;Activate();}
-        void SetPreview(Image image){var old=preview.Image;preview.Image=image;if(old!=null)old.Dispose();}
         TabPage Tab(string title){var p=new TabPage(title){BackColor=Card,ForeColor=Ink,Padding=new Padding(14)};tabs.TabPages.Add(p);return p;}
         Button Button(string text,Action action,int width=145){var b=new Button {Text=text,Width=width,Height=36,FlatStyle=FlatStyle.Flat,BackColor=Color.FromArgb(34,48,62),ForeColor=Ink,Margin=new Padding(0,0,8,8)};b.FlatAppearance.BorderColor=Color.FromArgb(61,79,94);b.Click+=delegate {try{action();}catch(Exception ex){Error(ex);}};return b;}
         Button AsyncButton(string text,Func<Task> action,int width=145){return Button(text,async delegate {await Work(action);},width);}
@@ -59,33 +40,25 @@ namespace FeniStudio {
         void Error(Exception e){status.Text=e.Message;MessageBox.Show(this,e.Message,"Feni Studio",MessageBoxButtons.OK,MessageBoxIcon.Information);}
         async Task Work(Func<Task> action){if(busy){status.Text="Wait for the current device operation to finish.";return;}busy=true;UseWaitCursor=true;try{await action();}catch(Exception ex){Error(ex);}finally{busy=false;UseWaitCursor=false;}}
         void Save(){rules.EndEdit();config.Rules=ruleList.ToList();config.RunRules=enabled.Checked;config.Url=url.Text.Trim();using(var test=new DeviceClient(config.Url)){}config.Save();status.Text="Configuration saved on this PC.";}
-        void BuildLibrary(){
-            var page=Tab("Library");var top=new Panel {Dock=DockStyle.Top,Height=74};folderLabel=new Label {Text=config.Folder.Length>0?config.Folder:"No folder selected",Dock=DockStyle.Fill,ForeColor=Muted,AutoEllipsis=true};top.Controls.Add(folderLabel);
-            var actions=Actions();actions.Controls.Add(Button("Choose folder",delegate {using(var d=new FolderBrowserDialog()){d.Description="Choose the folder containing your Feni animations";if(Directory.Exists(config.Folder))d.SelectedPath=config.Folder;if(d.ShowDialog(this)==DialogResult.OK){config.Folder=d.SelectedPath;config.Save();RefreshLibrary();}}}));actions.Controls.Add(Button("Rescan",RefreshLibrary,90));actions.Controls.Add(AsyncButton("Pack PNG frames",PackFrames,155));top.Controls.Add(actions);page.Controls.Add(top);
-            library=new ListBox {Dock=DockStyle.Fill,BackColor=Card,ForeColor=Ink,BorderStyle=BorderStyle.None,ItemHeight=30,Font=new Font("Segoe UI",11)};library.SelectedIndexChanged+=delegate {if(library.SelectedIndex>=0)Preview(libraryPaths[library.SelectedIndex]);};page.Controls.Add(library);library.BringToFront();
+        void SaveCode(){if(editingSlot>=0){project.Code[editingSlot]=editor.Text;if(Slots.Event(editingSlot))project.Duration[editingSlot]=(int)duration.Value;}project.Save();RefreshRevisionInfo();}
+        void SelectBehaviour(){SaveCode();editingSlot=behaviours.SelectedIndex;if(editingSlot<0)return;editor.Text=project.Code[editingSlot]??"";duration.Enabled=Slots.Event(editingSlot);duration.Value=Slots.Event(editingSlot)?project.Duration[editingSlot]:100;codeHint.Text=Slots.Names[editingSlot]+"  /  "+(Slots.Event(editingSlot)?"plays for the duration below":"runs while this behaviour is active")+"\nBlank code keeps the built-in animation. Save, then Build & flash to apply changes.";}
+        void BuildCode(){
+            var page=Tab("Animation code");var layout=new TableLayoutPanel {Dock=DockStyle.Fill,ColumnCount=2,RowCount=1};layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute,185));layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,100));page.Controls.Add(layout);
+            behaviours=new ListBox {Dock=DockStyle.Fill,BackColor=Card,ForeColor=Ink,BorderStyle=BorderStyle.None,Font=new Font("Segoe UI",11),ItemHeight=29};behaviours.Items.AddRange(Slots.Names);layout.Controls.Add(behaviours,0,0);
+            var body=new Panel {Dock=DockStyle.Fill,Padding=new Padding(14,0,0,0)};layout.Controls.Add(body,1,0);codeHint=new Label {Dock=DockStyle.Top,Height=62,ForeColor=Muted};body.Controls.Add(codeHint);
+            editor=new RichTextBox {Dock=DockStyle.Fill,BackColor=Color.FromArgb(15,22,31),ForeColor=Ink,Font=new Font("Consolas",11),AcceptsTab=true,WordWrap=false,DetectUrls=false,BorderStyle=BorderStyle.FixedSingle};body.Controls.Add(editor);editor.BringToFront();editor.KeyDown+=delegate(object sender,KeyEventArgs e){if(e.Control&&e.KeyCode==Keys.S){SaveCode();status.Text="Animation code saved locally.";e.SuppressKeyPress=true;}};
+            var actions=Actions();actions.Controls.Add(Button("Save code",delegate {SaveCode();status.Text="Code saved. Build & flash applies it to Feni.";},115));actions.Controls.Add(Button("Import code",delegate {using(var d=new OpenFileDialog {Filter="C++ animation code|*.cpp;*.h;*.txt|All files|*.*"}){if(d.ShowDialog(this)==DialogResult.OK){var f=new FileInfo(d.FileName);if(f.Length>100000)throw new IOException("Code file is too large.");editor.Text=File.ReadAllText(d.FileName);status.Text="Imported into the editor. Save when ready.";}}},125));actions.Controls.Add(Button("Insert example",delegate {editor.SelectedText=CodeProject.Example;},140));actions.Controls.Add(Button("Use built-in",delegate {editor.Clear();SaveCode();status.Text="Built-in selected locally. Build & flash to apply.";},125));actions.Controls.Add(AsyncButton("Test installed code",async delegate {EnsureDevice();await device.Post("/code/test",Fields("slot",behaviours.SelectedIndex));status.Text="Testing the code currently flashed on Feni; local edits need Build & flash.";},180));
+            duration=new NumericUpDown {Minimum=100,Maximum=10000,Increment=100,Width=95,Value=1800,Margin=new Padding(0,8,8,8)};var timing=new FlowLayoutPanel {Width=290,Height=44,Margin=new Padding(0),WrapContents=false};timing.Controls.Add(new Label {Text="Event duration (ms)",AutoSize=true,Margin=new Padding(0,10,8,0)});timing.Controls.Add(duration);actions.Controls.Add(timing);actions.Controls.Add(Button("Code guide",OpenGuide,110));body.Controls.Add(actions);behaviours.SelectedIndexChanged+=delegate {try{SelectBehaviour();}catch(Exception ex){Error(ex);}};behaviours.SelectedIndex=0;
         }
-        void RefreshLibrary(){
-            folderLabel.Text=config.Folder.Length==0?"No folder selected":config.Folder;library.Items.Clear();libraryPaths=new string[0];
-            if(!Directory.Exists(config.Folder))return;
-            try{libraryPaths=Directory.EnumerateFiles(config.Folder,"*.fna",SearchOption.AllDirectories).Take(500).OrderBy(p=>p,StringComparer.OrdinalIgnoreCase).ToArray();foreach(var p in libraryPaths)library.Items.Add(p.Substring(config.Folder.TrimEnd(Path.DirectorySeparatorChar).Length).TrimStart(Path.DirectorySeparatorChar));status.Text=libraryPaths.Length+" animation files found. Files remain in your folder.";}catch(Exception e){Error(e);}
+        TextBox PathRow(FlowLayoutPanel stack,string label,string value,bool folder){stack.Controls.Add(new Label {Text=label,AutoSize=true,ForeColor=Muted});var row=new FlowLayoutPanel {Width=1050,Height=45};var box=new TextBox {Text=value,Width=820,BackColor=Bg,ForeColor=Ink};row.Controls.Add(box);row.Controls.Add(Button("Browse",delegate {if(folder){using(var d=new FolderBrowserDialog()){d.Description="Choose the FeniBuddy firmware folder";if(d.ShowDialog(this)==DialogResult.OK)box.Text=d.SelectedPath;}}else{using(var d=new OpenFileDialog {Filter="Arduino CLI|arduino-cli.exe|Executable|*.exe"})if(d.ShowDialog(this)==DialogResult.OK)box.Text=d.FileName;}},100));stack.Controls.Add(row);return box;}
+        void BuildFirmware(){
+            var page=Tab("Build & flash");var top=new FlowLayoutPanel {Dock=DockStyle.Top,Height=245,FlowDirection=FlowDirection.TopDown,WrapContents=false,AutoScroll=true};page.Controls.Add(top);
+            firmwarePath=PathRow(top,"Firmware source folder",config.FirmwareFolder,true);cliPath=PathRow(top,"Arduino CLI",config.ArduinoCli,false);
+            var row=new FlowLayoutPanel {Width=1050,Height=50};row.Controls.Add(new Label {Text="USB port",AutoSize=true,Margin=new Padding(0,10,10,0)});ports=new ComboBox {Width=110,DropDownStyle=ComboBoxStyle.DropDown};ports.Items.AddRange(SerialPort.GetPortNames());ports.Text=config.Port;row.Controls.Add(ports);row.Controls.Add(Button("Refresh ports",delegate {string port=ports.Text;ports.Items.Clear();ports.Items.AddRange(SerialPort.GetPortNames());ports.Text=port;},130));row.Controls.Add(AsyncButton("Check / build",async delegate {await RunBuild(false);},135));row.Controls.Add(AsyncButton("Build & flash",async delegate {await RunBuild(true);},145));top.Controls.Add(row);top.Controls.Add(new Label {Text="Save your code, connect Feni by USB, then build. A failed build never flashes the device.\nWi-Fi settings and Calendar configuration are retained during an ordinary firmware upload.",AutoSize=true,ForeColor=Muted});
+            buildLog=new RichTextBox {Dock=DockStyle.Fill,ReadOnly=true,BackColor=Bg,ForeColor=Ink,Font=new Font("Consolas",10),WordWrap=false,Text="Compiler output appears here. The first build can take several minutes.\n"};page.Controls.Add(buildLog);buildLog.BringToFront();
         }
-        void Preview(string path){try{clip=FnaClip.Load(path);previewFrame=0;SetPreview(clip.Render(0));playback.Interval=1000/clip.Fps;playback.Start();previewInfo.Text=Path.GetFileName(path)+"\n"+clip.Frames+" frames  /  "+clip.Fps+" fps  /  "+clip.Seconds.ToString("0.0")+" s\n"+(clip.Data.Length/1024.0).ToString("0.0")+" KiB  /  16 colours";}catch(Exception e){playback.Stop();clip=null;previewInfo.Text=e.Message;}}
-        async Task PackFrames(){
-            string folder;using(var d=new FolderBrowserDialog()){d.Description="Choose numbered 160 x 128 PNG frames (0001.png, 0002.png...)";if(d.ShowDialog(this)!=DialogResult.OK)return;folder=d.SelectedPath;}
-            int fps=12;using(var d=new Form {Text="Frame rate",ClientSize=new Size(300,125),StartPosition=FormStartPosition.CenterParent,FormBorderStyle=FormBorderStyle.FixedDialog,MaximizeBox=false,MinimizeBox=false}){var n=new NumericUpDown {Minimum=1,Maximum=20,Value=12,Location=new Point(24,23),Width=90};d.Controls.Add(n);d.Controls.Add(new Label {Text="frames per second",Location=new Point(125,26),AutoSize=true});var ok=new Button {Text="Continue",DialogResult=DialogResult.OK,Location=new Point(175,75)};d.Controls.Add(ok);d.AcceptButton=ok;if(d.ShowDialog(this)!=DialogResult.OK)return;fps=(int)n.Value;}
-            string output;using(var d=new SaveFileDialog {Filter="Feni animation|*.fna",FileName=Path.GetFileName(folder)+".fna",InitialDirectory=config.Folder}){if(d.ShowDialog(this)!=DialogResult.OK)return;output=d.FileName;}
-            status.Text="Packing frames and checking the animation...";await Task.Run(()=>FnaClip.Pack(folder,output,fps));if(config.Folder.Length==0){config.Folder=Path.GetDirectoryName(output);config.Save();}RefreshLibrary();Preview(output);status.Text="Packed "+Path.GetFileName(output)+". Assign it in Animations.";
-        }
-        void BuildAssignments(){
-            var page=Tab("Animations");page.Controls.Add(new Label {Dock=DockStyle.Top,Height=46,Text="Choose a behaviour, then assign a file. Empty slots keep Feni's built-in animation.",ForeColor=Muted});
-            assignments=Grid();assignments.ReadOnly=true;assignments.Columns.Add(new DataGridViewTextBoxColumn {HeaderText="Behaviour",Width=155});assignments.Columns.Add(new DataGridViewTextBoxColumn {HeaderText="Local animation file",AutoSizeMode=DataGridViewAutoSizeColumnMode.Fill});
-            for(int i=0;i<15;i++)assignments.Rows.Add(Slots.Names[i],String.IsNullOrEmpty(config.Files[i])?"Built-in / unassigned":Path.GetFileName(config.Files[i]));
-            assignments.SelectionChanged+=delegate {int slot=SelectedSlot();if(slot>=0&&!String.IsNullOrEmpty(config.Files[slot]))Preview(config.Files[slot]);};page.Controls.Add(assignments);assignments.BringToFront();
-            var actions=Actions();actions.Controls.Add(Button("Assign file",Assign));actions.Controls.Add(AsyncButton("Send selected",async delegate {Save();int slot=SelectedSlot();if(slot<0)return;await SendClip(slot);await DeviceInfo();},130));actions.Controls.Add(AsyncButton("Test on Feni",async delegate {int slot=SelectedSlot();if(slot<0)return;EnsureDevice();await device.Post("/animations/play",Fields("slot",slot));status.Text="Playing on Feni for up to 12 seconds.";},130));actions.Controls.Add(AsyncButton("Send all assigned",async delegate {Save();for(int i=0;i<15;i++)if(!String.IsNullOrEmpty(config.Files[i]))await SendClip(i);await DeviceInfo();},155));actions.Controls.Add(AsyncButton("Restore built-in",async delegate {int slot=SelectedSlot();if(slot<0)return;if(MessageBox.Show(this,"Remove the uploaded "+Slots.Names[slot]+" clip from Feni? Your local file stays intact.","Restore built-in",MessageBoxButtons.YesNo)!=DialogResult.Yes)return;EnsureDevice();await device.Post("/animations/remove",Fields("slot",slot));config.Files[slot]=null;assignments.Rows[slot].Cells[1].Value="Built-in / unassigned";config.Save();status.Text="Built-in animation restored.";},145));page.Controls.Add(actions);
-        }
-        int SelectedSlot(){return assignments.CurrentRow==null?-1:assignments.CurrentRow.Index;}
-        void Assign(){int slot=SelectedSlot();if(slot<0)return;using(var d=new OpenFileDialog {Filter="Feni compact animation|*.fna",InitialDirectory=config.Folder}){if(d.ShowDialog(this)!=DialogResult.OK)return;var c=FnaClip.Load(d.FileName);if(Slots.Event(slot)&&c.Seconds>10)throw new InvalidDataException("This event animation must be 10 seconds or shorter.");config.Files[slot]=d.FileName;assignments.Rows[slot].Cells[1].Value=Path.GetFileName(d.FileName);config.Save();Preview(d.FileName);status.Text="Assigned locally. Send selected to install it on Feni.";}}
-        async Task SendClip(int slot){EnsureDevice();if(String.IsNullOrEmpty(config.Files[slot]))throw new InvalidOperationException("Assign a file first.");status.Text="Sending "+Slots.Names[slot]+"...";await device.Upload(slot,config.Files[slot]);status.Text=Slots.Names[slot]+" saved on Feni.";}
+        async Task RunBuild(bool flash){SaveCode();Save();config.ArduinoCli=cliPath.Text.Trim();config.FirmwareFolder=firmwarePath.Text.Trim();config.Port=ports.Text.Trim();config.Save();buildLog.Clear();var snapshot=new JavaScriptSerializer().Deserialize<CodeProject>(new JavaScriptSerializer().Serialize(project));status.Text=flash?"Building before USB flash...":"Checking animation code...";await FirmwareBuilder.Build(config,snapshot,flash,AppendLog);if(flash&&device!=null){device.Dispose();device=null;}status.Text=flash?"Flashed. Feni is restarting; Studio will reconnect.":"Build passed. Ready to flash.";}
+        void AppendLog(string text){if(IsDisposed)return;if(InvokeRequired){BeginInvoke(new Action<string>(AppendLog),text);return;}buildLog.AppendText(text);buildLog.SelectionStart=buildLog.TextLength;buildLog.ScrollToCaret();}
         void BuildRules(){
             var page=Tab("App rules");page.Controls.Add(new Label {Dock=DockStyle.Top,Height=48,Text="The first matching enabled rule wins. Foreground follows the app you are using; Running also checks background apps.",ForeColor=Muted});
             rules=Grid();ruleList=new BindingList<AppRule>(config.Rules);rules.DataSource=ruleList;
@@ -100,30 +73,15 @@ namespace FeniStudio {
         void RunningApps(){using(var d=new Form {Text="Choose a running application",ClientSize=new Size(400,430),StartPosition=FormStartPosition.CenterParent}){var list=new ListBox {Dock=DockStyle.Fill,Font=Font};list.Items.AddRange(ProcessNames());var add=new Button {Text="Use selected application",Dock=DockStyle.Bottom,Height=40,DialogResult=DialogResult.OK};d.Controls.Add(list);d.Controls.Add(add);if(d.ShowDialog(this)==DialogResult.OK&&list.SelectedItem!=null)AddApp(list.SelectedItem.ToString());}}
         void MoveRule(int delta){if(rules.CurrentRow==null)return;int i=rules.CurrentRow.Index,j=i+delta;if(j<0||j>=ruleList.Count)return;rules.EndEdit();var r=ruleList[i];ruleList.RemoveAt(i);ruleList.Insert(j,r);rules.CurrentCell=rules.Rows[j].Cells[1];}
         void BuildDevice(){
-            var page=Tab("Device");var stack=new FlowLayoutPanel {Dock=DockStyle.Fill,FlowDirection=FlowDirection.TopDown,WrapContents=false,AutoScroll=true};page.Controls.Add(stack);
-            stack.Controls.Add(new Label {Text="Feni address",AutoSize=true,ForeColor=Muted});url=new TextBox {Text=config.Url,Width=400,BackColor=Bg,ForeColor=Ink,BorderStyle=BorderStyle.FixedSingle,Margin=new Padding(0,8,0,16)};stack.Controls.Add(url);
-            stack.Controls.Add(AsyncButton("Connect / refresh",Connect,185));deviceInfo=new Label {Width=650,Height=135,Text="Connect to see firmware and animation storage.",ForeColor=Muted};stack.Controls.Add(deviceInfo);
-            enabled=new CheckBox {Text="Run application reactions in the background",Checked=config.RunRules,Width=450,Height=35};enabled.CheckedChanged+=delegate {config.RunRules=enabled.Checked;config.Save();};stack.Controls.Add(enabled);
-            ruleState=new Label {Width=650,Height=60,ForeColor=Muted,Text="Waiting for PC connection."};stack.Controls.Add(ruleState);
-            stack.Controls.Add(Button("Save configuration",Save,185));stack.Controls.Add(Button("Open animation folder",delegate {if(Directory.Exists(config.Folder))Process.Start("explorer.exe",'"'+config.Folder+'"');else status.Text="Choose a folder in Library first.";},220));
-            stack.Controls.Add(new Label {Text="Closing the window keeps app reactions running in the notification area.\nUse the tray menu's Quit command to stop.\n\nYour animation files stay in the folder you choose. Uploads are copies.\nEmpty slots use the built-in face. Menus, the white clock and alerts keep priority.",ForeColor=Muted,Width=650,Height=140,Margin=new Padding(0,25,0,0)});
+            var page=Tab("Device");var stack=new FlowLayoutPanel {Dock=DockStyle.Fill,FlowDirection=FlowDirection.TopDown,WrapContents=false,AutoScroll=true};page.Controls.Add(stack);stack.Controls.Add(new Label {Text="Feni address",AutoSize=true,ForeColor=Muted});url=new TextBox {Text=config.Url,Width=400,BackColor=Bg,ForeColor=Ink,Margin=new Padding(0,8,0,16)};stack.Controls.Add(url);stack.Controls.Add(AsyncButton("Connect / refresh",Connect,185));deviceInfo=new Label {Width=800,Height=110,ForeColor=Muted};stack.Controls.Add(deviceInfo);
+            enabled=new CheckBox {Text="Run application reactions in the background",Checked=config.RunRules,Width=450,Height=35};enabled.CheckedChanged+=delegate {config.RunRules=enabled.Checked;config.Save();};stack.Controls.Add(enabled);ruleState=new Label {Width=800,Height=65,ForeColor=Muted};stack.Controls.Add(ruleState);stack.Controls.Add(Button("Save configuration",Save,190));stack.Controls.Add(new Label {Text="Closing the window keeps application reactions running in the notification area.\nUse the tray menu's Quit command to stop.\n\nAnimation code is compiled into Feni; startup, sleep and wake also work without the PC.\nApp reactions require Studio running. Menus, alerts and the white clock retain priority.",Width=900,Height=170,ForeColor=Muted,Margin=new Padding(0,25,0,0)});
         }
         void EnsureDevice(){if(device==null)throw new InvalidOperationException("Connect to Feni in the Device tab first.");}
-        async Task Connect(){config.Url=url.Text.Trim();var candidate=new DeviceClient(config.Url);try{string text=await candidate.Get("/animations");if(!text.Contains("FNA1"))throw new IOException("Feni needs firmware 3.4.0 or later.");if(device!=null)device.Dispose();device=candidate;config.Save();await DeviceInfo();status.Text="Connected to Feni.";}catch{if(device!=candidate)candidate.Dispose();throw;}}
-        async Task DeviceInfo(){EnsureDevice();var serializer=new JavaScriptSerializer();var d=serializer.Deserialize<Dictionary<string,object>>(await device.Get("/animations"));deviceInfo.Text="Connected  /  "+device.Url+"\nFormat: FNA1  /  160 x 128  /  16 colours\nStorage: "+(Convert.ToInt64(d["usedBytes"])/1024)+" / "+(Convert.ToInt64(d["totalBytes"])/1024)+" KiB used\n"+(Convert.ToBoolean(d["mounted"])?"Ready for animation uploads.":"Storage unavailable. Existing flash contents were preserved.");}
-        async Task SendActivity(){
-            if(busy)return;busy=true;
-            try {
-                if(device==null)await Connect();
-                var saved=config.Rules.ToArray();string foreground=Foreground.Name();string[] running=saved.Any(r=>r.Enabled&&r.Trigger=="Running")?ProcessNames():new string[0];
-                int slot=config.RunRules?Slots.Choose(saved,foreground,running):6;
-                int activity=slot==4?1:slot==5?2:slot>=7?3:0;
-                var values=Fields("activity",activity);if(activity==3)values.Add("animation",slot.ToString());
-                await device.Post("/pc",values);ruleState.Text=(config.RunRules?"Reactions active":"Reactions paused")+"  /  "+Slots.Names[slot]+"\nPC connection healthy";
-            }catch(Exception ex){ruleState.Text="Waiting to reconnect: "+ex.Message;}finally{busy=false;}
-        }
+        async Task Connect(){config.Url=url.Text.Trim();var candidate=new DeviceClient(config.Url);try{var info=new JavaScriptSerializer().Deserialize<Dictionary<string,object>>(await candidate.Get("/code"));if(Convert.ToString(info["engine"])!="cpp")throw new IOException("Flash firmware 3.5.0 or later first.");if(device!=null)device.Dispose();device=candidate;config.Save();installedRevision=Convert.ToString(info["revision"]);RefreshRevisionInfo();status.Text="Connected to Feni.";}catch{if(device!=candidate)candidate.Dispose();throw;}}
+        void RefreshRevisionInfo(){if(deviceInfo!=null&&device!=null)deviceInfo.Text="Connected  /  "+device.Url+"\nAnimation engine: C++ drawing code\nInstalled code revision: "+installedRevision+"\nSaved code revision: "+project.Revision;}
+        async Task SendActivity(){if(busy)return;busy=true;try{if(device==null)await Connect();var saved=config.Rules.ToArray();string foreground=Foreground.Name();string[] running=saved.Any(r=>r.Enabled&&r.Trigger=="Running")?ProcessNames():new string[0];int slot=config.RunRules?Slots.Choose(saved,foreground,running):6;int activity=slot==4?1:slot==5?2:slot>=7?3:0;var values=Fields("activity",activity);if(activity==3)values.Add("animation",slot.ToString());await device.Post("/pc",values);ruleState.Text=(config.RunRules?"Reactions active":"Reactions paused")+"  /  "+Slots.Names[slot]+"\nPC connection healthy";}catch(Exception ex){ruleState.Text="Waiting to reconnect: "+ex.Message;}finally{busy=false;}}
         static Dictionary<string,string> Fields(string key,int value){return new Dictionary<string,string>{{key,value.ToString()}};}
-        void OpenGuide(){string path=Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"Animation format.txt");if(File.Exists(path))Process.Start("notepad.exe",'"'+path+'"');else MessageBox.Show(this,"FNA1: 160 x 128, 16 RGB565 colours, 1-20 fps. Use Library > Pack PNG frames. Number frames with zero padding. Event clips: max 10 seconds. Other clips: max 30 seconds / 300 frames. All clips: max 512 KiB.","Animation format");}
+        void OpenGuide(){string path=Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"Code guide.txt");if(File.Exists(path))Process.Start("notepad.exe",'"'+path+'"');}
         public void SaveScreenshot(string path){using(var bitmap=new Bitmap(Width,Height)){DrawToBitmap(bitmap,new Rectangle(0,0,Width,Height));bitmap.Save(path,System.Drawing.Imaging.ImageFormat.Png);}}
     }
     static class Program {
@@ -132,8 +90,7 @@ namespace FeniStudio {
         internal static int ShowMessage=(int)RegisterWindowMessage("FeniStudio.ShowWindow");
         [STAThread]static int Main(string[] args){
             try {
-                if(args.Length==4&&args[0]=="--pack"){FnaClip.Pack(args[1],args[2],Int32.Parse(args[3]));return 0;}
-                if(args.Length==2&&args[0]=="--validate"){FnaClip.Load(args[1]);return 0;}
+                if(args.Length==2&&args[0]=="--generate-header"){File.WriteAllText(args[1],CodeProject.Load().Header());return 0;}
                 if(args.Length==1&&args[0]=="--self-test"){SelfTest.Run();return 0;}
                 bool created;using(var mutex=new Mutex(true,"Local\\FeniStudio",out created)) {
                     if(!created){PostMessage(new IntPtr(0xffff),(uint)ShowMessage,IntPtr.Zero,IntPtr.Zero);return 0;}

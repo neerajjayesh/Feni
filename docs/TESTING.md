@@ -1,5 +1,27 @@
 # Build and verification
 
+## Code animations / v3.5.0
+
+Studio self-tests cover migration from the frame-based configuration while
+retaining app rules, source generation for all 15 behaviours, built-in fallback,
+event durations, revision changes and project serialization. The generated C++
+fixture is compiled and run with the host compiler. All 15 generated replacement
+callbacks also compiled against the real ESP8266 firmware through Studio's build
+pipeline. A deliberately failing compiler verified that upload is never invoked
+after a failed build.
+
+The final firmware was built and uploaded with Studio's production build helper.
+Existing gesture, sleep/wake, timer, settings, Calendar and WLED host suites pass.
+Live checks verified the code-only API, all 15 behaviour entries, event duration
+metadata, preview authorization and bounds, installed-code preview, menu/white
+clock priority and preservation of the Purple theme and Auto mode. Calendar
+synced successfully; free heap was about 26 KiB after the checks.
+The Windows code editor and USB build controls were inspected at 125% scaling.
+Custom user code remains the author's responsibility; compilation alone does
+not verify arbitrary animation timing or runtime behaviour.
+
+## Earlier frame implementation (removed in v3.5.0)
+
 ## Feni Studio / v3.4.0
 
 Firmware builds for ESP8266 core 3.1.2 with the second IRAM heap and the explicit

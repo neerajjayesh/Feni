@@ -11,7 +11,12 @@ foreach ($studioProcess in Get-Process -Name 'Feni Studio' -ErrorAction Silently
     if ($studioProcess.Path -eq $studioExe -or $studioProcess.Path -eq (Join-Path $PSScriptRoot 'bin\Feni Studio.exe')) { Stop-Process -Id $studioProcess.Id }
 }
 New-Item -ItemType Directory -Force -Path $studioApp | Out-Null
-Copy-Item -LiteralPath (Join-Path $studioBuild 'Feni Studio.exe'), (Join-Path $studioBuild 'Animation format.txt') -Destination $studioApp -Force
+Copy-Item -LiteralPath (Join-Path $studioBuild 'Feni Studio.exe'), (Join-Path $studioBuild 'Code guide.txt') -Destination $studioApp -Force
+$studioFirmware = Join-Path $studioApp 'firmware'
+New-Item -ItemType Directory -Force -Path $studioFirmware | Out-Null
+Copy-Item -LiteralPath (Join-Path (Split-Path $PSScriptRoot -Parent) 'FeniBuddy') -Destination $studioFirmware -Recurse -Force
+$studioOldGuide = Join-Path $studioApp 'Animation format.txt'
+if (Test-Path -LiteralPath $studioOldGuide) { Remove-Item -LiteralPath $studioOldGuide }
 $studioStartup = [Environment]::GetFolderPath('Startup')
 $studioLegacy = Join-Path $env:LOCALAPPDATA 'FeniPcCompanion\FeniPcCompanion.ps1'
 foreach ($studioProcess in Get-CimInstance Win32_Process -Filter "Name = 'powershell.exe' OR Name = 'pwsh.exe'") {

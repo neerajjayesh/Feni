@@ -19,7 +19,8 @@
 6. Select **NodeMCU 1.0 (ESP-12E Module)** and your USB serial port.
 7. Set **MMU: 16KB cache + 48KB IRAM and 2nd Heap (shared)** and **Flash Size:
    4MB (FS:1MB OTA:~1019KB)**. The second heap is required for Calendar TLS buffers;
-   the filesystem stores uploaded animations. Keep other board settings at defaults.
+   the flash layout is retained for compatibility. Animations now use compiled code,
+   without filesystem playback. Keep other board settings at defaults.
 8. Upload. Automatic reset normally handles the bootloader. Release FLASH for
    the normal startup after uploading.
 
