@@ -11,3 +11,5 @@ secrets.h
 .env*
 .clasp.json
 CONNECTION.md
+pc/config.json
+pc/status.json

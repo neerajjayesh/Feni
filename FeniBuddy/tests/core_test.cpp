@@ -50,7 +50,7 @@ void controls() {
 
 void menus() {
   Ui ui;CHECK(!ui.online);CHECK(!ui.showClock());
-  ui.handle(Gesture::Tap,100);CHECK(ui.showClock());ui.update(10099);CHECK(ui.peek);ui.update(10100);CHECK(!ui.peek);
+  ui.handle(Gesture::DoubleTap,100);CHECK(ui.showClock());ui.update(10099);CHECK(ui.peek);ui.update(10100);CHECK(!ui.peek);
   ui.handle(Gesture::Hold,20000);CHECK(ui.page==Page::Menu);CHECK(ui.menu==0);
   ui.handle(Gesture::Hold,21000);CHECK(ui.page==Page::Calendar);
   ui.handle(Gesture::DoubleTap,22000);CHECK(ui.page==Page::Menu);
@@ -60,9 +60,9 @@ void menus() {
   CHECK(ui.mode==Mode::Buddy);CHECK(ui.modeChanged);CHECK(ui.page==Page::Home);
   ui.online=true;ui.handle(Gesture::Tap,27000);CHECK(!ui.showClock());
   ui.mode=Mode::Clock;CHECK(ui.showClock());ui.handle(Gesture::Tap,28000);CHECK(ui.showClock());
-  ui.online=false;CHECK(!ui.showClock());ui.handle(Gesture::Tap,29000);CHECK(ui.showClock());
+  ui.online=false;CHECK(!ui.showClock());ui.handle(Gesture::DoubleTap,29000);CHECK(ui.showClock());
   ui.handle(Gesture::DoubleTap,29500);CHECK(!ui.showClock());
-  ui.online=true;ui.mode=Mode::Auto;ui.handle(Gesture::Tap,30000);CHECK(ui.showClock());
+  ui.online=true;ui.mode=Mode::Auto;ui.handle(Gesture::DoubleTap,30000);CHECK(ui.showClock());
   ui.handle(Gesture::Hold,30100);CHECK(ui.page==Page::Menu);CHECK(!ui.peek);
   ui.handle(Gesture::DoubleTap,30200);CHECK(ui.page==Page::Home);
   // Double back preserves each submenu's highlighted parent and does not select.
@@ -145,7 +145,7 @@ void wifiSettings() {
   ui.update(uint32_t(0xfffffff0UL+14999));CHECK(ui.page==Page::WifiPassword);
   ui.update(uint32_t(0xfffffff0UL+15000));CHECK(ui.page==Page::Wifi);
   ui.page=Page::Home;ui.meetingActive=true;CHECK(ui.showMeeting());ui.back();CHECK(!ui.showMeeting());
-  ui.meetingDismissed=false;ui.handle(Gesture::Tap,38000);CHECK(ui.showClock() && !ui.showMeeting());
+  ui.meetingDismissed=false;ui.handle(Gesture::DoubleTap,38000);CHECK(ui.showClock() && !ui.showMeeting());
   ui.back();CHECK(ui.showMeeting());ui.mode=Mode::Clock;CHECK(!ui.showMeeting());
 }
 

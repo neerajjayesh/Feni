@@ -13,7 +13,9 @@ char wledVerifyIp[16]={},wledVerifyName[21]={};
 String asJson(JsonDocument &doc) {String output;serializeJson(doc,output);return output;}
 String statusJson() {
   DynamicJsonDocument doc(4096);
-  doc["name"]="Feni";doc["firmware"]="feni-buddy-3.2.2";
+  doc["name"]="Feni";doc["firmware"]="feni-buddy-3.3.0";
+  doc["sleeping"]=ui.sleeping();doc["facePhase"]=int(ui.facePhase);doc["sleepAfterSeconds"]=buddy::Ui::SleepTimeout/1000;
+  doc["pcConnected"]=pc.connected;doc["pcActivity"]=int(pc.activity);doc["pcIntro"]=pc.introPlaying;
   doc["wifi"]=ui.online;doc["setup"]=apActive;doc["ip"]=WiFi.localIP().toString();doc["networkMessage"]=networkMessage;
   doc["ssid"]=settings.ssid;doc["mode"]=int(ui.mode);doc["page"]=int(ui.page);doc["choice"]=ui.choice;doc["menu"]=ui.menu;
   doc["theme"]=ui.theme;doc["meetingActive"]=ui.meetingActive;doc["meetingVisible"]=ui.showMeeting();doc["meetingSeconds"]=meetingIndex>=0 ? events[meetingIndex].end-epochNow() : 0;
@@ -43,9 +45,9 @@ String statusJson() {
   for(int i=0;i<settings.presetCount;++i) {JsonObject p=presets.createNestedObject();p["id"]=settings.presets[i].id;p["name"]=settings.presets[i].name;}
   return asJson(doc);
 }
-bool authorizeWrite() {
+bool authorizeWrite(bool userActivity=true) {
   if(server.header("X-Feni-Token")!=csrfToken) {server.send(403,"text/plain","Reload the Feni page and try again.");return false;}
-  lastInputAt=millis();ui.noteActivity(lastInputAt);
+  if(userActivity) {lastInputAt=millis();ui.noteActivity(lastInputAt);}
   return true;
 }
 bool numberArg(const String &name,uint32_t &result) {
@@ -200,6 +202,12 @@ void startNetwork() {
   server.on("/",HTTP_GET,sendPage);
   server.on("/session",HTTP_GET,[](){server.sendHeader("Cache-Control","no-store");server.send(200,"text/plain",csrfToken);});
   server.on("/status",HTTP_GET,[](){server.sendHeader("Cache-Control","no-store");server.send(200,"application/json",statusJson());});
+  server.on("/pc",HTTP_POST,[](){
+    if(!authorizeWrite(false)) return;
+    uint32_t activity;
+    if(!numberArg("activity",activity)||activity>2) {server.send(400,"text/plain","Activity must be 0, 1 or 2.");return;}
+    pc.receive(static_cast<buddy::PcActivity>(activity),millis());server.send(200,"text/plain","OK");
+  });
   server.on("/wifi",HTTP_POST,receiveWifi);server.on("/settings",HTTP_POST,receiveSettings);
   server.on("/wifi/forget",HTTP_POST,[](){
     if(!authorizeWrite())return;
@@ -228,7 +236,8 @@ void startNetwork() {
   });
   server.on("/control",HTTP_POST,[](){
     if(!authorizeWrite()) return;String action=server.arg("action");
-    buddy::Gesture gesture=action=="tap" ? buddy::Gesture::Tap : action=="hold" ? buddy::Gesture::Hold : action=="back" ? buddy::Gesture::DoubleTap : buddy::Gesture::None;
+    if(action=="back") {ui.back();server.send(200,"text/plain","OK");return;}
+    buddy::Gesture gesture=action=="tap" ? buddy::Gesture::Tap : action=="hold" ? buddy::Gesture::Hold : action=="double" ? buddy::Gesture::DoubleTap : buddy::Gesture::None;
     if(gesture==buddy::Gesture::None){server.send(400,"text/plain","Unknown control");return;}
     lastInputAt=millis();ui.handle(gesture,lastInputAt);server.send(200,"text/plain","OK");
   });
@@ -311,10 +320,12 @@ void handleSerial() {
         if(settings.ssid[0]) {WiFi.begin(settings.ssid,settings.password);wifiAttemptAt=millis();}
         Serial.println(F("OK"));
       }
-      else if(!overflow && (!strcmp(line,"TAP") || !strcmp(line,"HOLD") || !strcmp(line,"BACK"))) {
-        lastInputAt=millis();ui.handle(!strcmp(line,"TAP") ? buddy::Gesture::Tap : !strcmp(line,"HOLD") ? buddy::Gesture::Hold : buddy::Gesture::DoubleTap,lastInputAt);
+      else if(!overflow && (!strcmp(line,"TAP") || !strcmp(line,"HOLD") || !strcmp(line,"BACK") || !strcmp(line,"DOUBLE"))) {
+        lastInputAt=millis();
+        if(!strcmp(line,"BACK")) {ui.noteActivity(lastInputAt);ui.back();}
+        else ui.handle(!strcmp(line,"TAP") ? buddy::Gesture::Tap : !strcmp(line,"HOLD") ? buddy::Gesture::Hold : buddy::Gesture::DoubleTap,lastInputAt);
         Serial.println(F("OK"));
-      } else if(used) Serial.println(F("Commands: STATUS, TAP, HOLD, BACK, WIFI, RECONNECT"));
+      } else if(used) Serial.println(F("Commands: STATUS, TAP, DOUBLE, HOLD, BACK, WIFI, RECONNECT"));
       used=0;overflow=false;
     } else if(used<sizeof(line)-1)line[used++]=c;else overflow=true;
   }

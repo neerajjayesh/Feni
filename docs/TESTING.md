@@ -92,3 +92,31 @@ observed it at 60.064 seconds. A running ten-minute timer continued behind the
 face, and a tap reopened the white clock. The test-created timer was cancelled,
 the original mode restored, and theme and Wi-Fi settings were preserved.
 Calendar HTTPS sync succeeded afterward. Physical presses were not automated.
+
+## v3.3.0 animations and PC companion
+
+The firmware host suites include startup timing, sleep and wake in every display
+mode, the double-press clock shortcut, timer continuation, rollover, centered
+opening geometry, PC reconnect/expiry and sleep with continuous PC heartbeats.
+Run `FeniBuddy/Test.ps1` as before. For the Windows companion, run:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\pc\Test.ps1
+```
+
+The companion checks cover app-name normalization, coding/gaming classification
+and local destination validation. A live Windows PowerShell run also verified
+the foreground-process API path and session-token exchange with the device.
+
+On-board HTTP tests passed the single/double/hold controls, white clock capture,
+PC authorization and input validation, connection animation, gaming/coding
+decorations, and stale connection expiry. With a running ten-minute timer and
+continuous PC heartbeats, the one-minute idle return remained active and sleep
+was observed at 304.113 seconds (five-second polling). One press played the
+wake sequence without a clock peek; double press then opened the clock. The
+temporary timer was cancelled and original theme, mode and Wi-Fi preserved.
+Framebuffer captures were inspected for connection, gaming, coding, sleep and
+wake. The test suite also covers a wake queued during blocked network drawing.
+Physical FLASH presses and launching Steam/VS Code were not automated; device
+tests used the same gesture handler and injected PC categories, while companion
+tests exercised foreground detection, category mapping and live delivery.

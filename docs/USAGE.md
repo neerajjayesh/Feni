@@ -1,6 +1,8 @@
 # Controls and menus
 
-Tap advances, hold selects, and double tap goes Back. One tap waits about 350 ms
+In menus, tap advances, hold selects, and double tap goes Back. On the buddy
+home screen, double tap opens the clock for ten seconds; another double tap
+closes it. One tap waits about 350 ms
 to distinguish a double tap. A hold triggers at about 900 ms.
 
 | Menu | Behavior |
@@ -11,7 +13,7 @@ to distinguish a double tap. A hold triggers at about 900 ms.
 | WLED MODE | Tap through favorite presets; hold applies one. |
 | SETTINGS | Wi-Fi submenu and Accent Colours. |
 
-The current release is v3.2.2. Larger menus show three filled rectangular rows;
+The current release is v3.3.0. Larger menus show three filled rectangular rows;
 tap scrolls through all choices while keeping the selected row visible.
 
 ## Accent colours
@@ -26,9 +28,9 @@ also provides an accent selector.
 ## Meeting countdowns
 
 Active timed events automatically show their name with time remaining beneath
-it on the Buddy/Auto home screen. Clock mode stays on its white clock. In Auto,
-tap still shows the clock for ten seconds; double tap dismisses the meeting
-until a different event becomes active. Hold opens the menu as usual. Calendar
+it on the Buddy/Auto home screen. Clock mode stays on its white clock. Double
+tap shows the clock for ten seconds, then the meeting returns. The web Back
+control can dismiss the meeting. Hold opens the menu as usual. Calendar
 cards also show countdowns for ongoing timed events.
 
 For overlapping events, the soonest ending active event takes priority. All-day
@@ -46,7 +48,7 @@ for up to 15 seconds. An active timer does not survive power loss.
 
 ## Clock
 
-Auto normally shows the face; a tap shows the clock for ten seconds. Clock mode
+Auto normally shows the face; a double tap shows the clock for ten seconds. Clock mode
 shows time while awake, and Buddy mode shows the face. The default timezone is
 India (`IST-5:30`); change the POSIX timezone in the local page if needed.
 
@@ -86,3 +88,18 @@ Auto clock peek and fifteen-second password hiding still apply.
 
 The setup hotspot keeps running if Wi-Fi is unavailable. After the face appears,
 a button action brings back the offline controls or setup information.
+
+## Startup, sleep and wake
+
+Startup gradually opens the centered square eyes with a short progress line.
+After five minutes without button or web-control activity, Feni closes its eyes
+and sleeps. The earlier one-minute return to the buddy face still applies.
+A single FLASH press plays a 1.4-second wake animation and leaves the face
+visible, including in Auto and Clock modes. The first gesture only wakes;
+double tap afterward opens the clock and hold opens the menu.
+
+Timers continue while sleeping. Their completion alert still appears; new
+meeting notifications remain available. A newly active meeting wakes the
+Buddy/Auto home screen. Background PC messages do not postpone sleep.
+
+See [PC companion setup](PC.md) for gaming, coding and connection animations.

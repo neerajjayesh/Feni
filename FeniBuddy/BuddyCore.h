@@ -7,6 +7,7 @@ enum class Gesture : uint8_t { None, Tap, DoubleTap, Hold };
 enum class Page : uint8_t { Home, Menu, Calendar, Modes, Timers, Wled, Settings,
                             WifiInfo, WifiPassword, ForgetWifi, CustomTimer, Wifi, Colours };
 enum class Mode : uint8_t { Buddy, Clock, Auto };
+enum class FacePhase : uint8_t { Awake, Startup, Sleeping, Waking };
 constexpr uint8_t MenuCount = 5;
 constexpr uint16_t MaxTimerMinutes = 180;
 
@@ -57,6 +58,10 @@ struct Ui {
   uint8_t theme = 0;
   bool themeChanged = false, meetingActive = false, meetingDismissed = false;
   static constexpr uint32_t IdleTimeout = 60000;
+  static constexpr uint32_t SleepTimeout = 300000, WakeDuration = 1400, StartupDuration = 1800;
+  FacePhase facePhase = FacePhase::Awake;
+  uint32_t facePhaseAt = 0;
+  bool wakeFace = false, animationPending = false;
   bool idleBuddy = false;
   uint32_t activityAt = 0, idleEnteredAt = 0;
   uint16_t customMinutes = 25;
@@ -65,9 +70,17 @@ struct Ui {
   uint32_t peekAt = 0, timerAt = 0, timerLength = 0, doneAt = 0, passwordAt = 0;
 
   void noteActivity(uint32_t now) { activityAt=now;idleBuddy=false; }
+  bool sleeping() const { return facePhase==FacePhase::Sleeping; }
+  bool animating() const { return facePhase==FacePhase::Startup || facePhase==FacePhase::Waking; }
+  void beginStartup(uint32_t now) { facePhase=FacePhase::Startup;facePhaseAt=now;animationPending=true;noteActivity(now); }
+  void wake(uint32_t now) { facePhase=FacePhase::Waking;facePhaseAt=now;animationPending=true;wakeFace=true;peek=false;noteActivity(now); }
+  // Network yields sample buttons, but drawing may resume later. Start the visible
+  // animation at its first frame so a wake cannot expire unseen during HTTPS.
+  void startFaceFrame(uint32_t now) { if(animating() && animationPending) {facePhaseAt=now;animationPending=false;} }
   // A newly starting meeting gets one viewing window even if Feni was already idle.
-  void wakeForMeeting(uint32_t now) { if(page==Page::Home && mode!=Mode::Clock) noteActivity(now); }
+  void wakeForMeeting(uint32_t now) { if(page==Page::Home && mode!=Mode::Clock) {facePhase=FacePhase::Awake;wakeFace=false;noteActivity(now);} }
   void update(uint32_t now) {
+    if(animating() && !animationPending && uint32_t(now-facePhaseAt)>=(facePhase==FacePhase::Startup?StartupDuration:WakeDuration)) facePhase=FacePhase::Awake;
     if(!idleBuddy && uint32_t(now-activityAt)>=IdleTimeout) {
       page=Page::Home;choice=0;peek=false;idleBuddy=true;idleEnteredAt=now;
       reminder=false;timerDone=false;customInvalid=false;
@@ -75,8 +88,11 @@ struct Ui {
     if (peek && now - peekAt >= 10000) peek = false;
     if (timerRunning && now - timerAt >= timerLength) {
       timerRunning = false; timerDone = true; doneAt = now;
+      if(sleeping()) {facePhase=FacePhase::Awake;wakeFace=true;activityAt=now;}
     }
     if (timerDone && now - doneAt >= 15000) timerDone = false;
+    if(page==Page::Home && idleBuddy && !timerDone && !reminder && !animating() && uint32_t(now-activityAt)>=SleepTimeout)
+      facePhase=FacePhase::Sleeping;
     if (page == Page::WifiPassword && now - passwordAt >= 15000) { page = Page::Wifi; choice = 1; }
   }
   bool startTimer(uint16_t minutes, uint32_t now) {
@@ -89,8 +105,8 @@ struct Ui {
     uint32_t elapsed = now - timerAt;
     return timerRunning && elapsed < timerLength ? (timerLength - elapsed + 999) / 1000 : 0;
   }
-  bool showClock() const { return !idleBuddy && page == Page::Home && (peek || (online && mode == Mode::Clock)); }
-  bool showMeeting() const { return !idleBuddy && page == Page::Home && meetingActive && !meetingDismissed && !showClock(); }
+  bool showClock() const { return !sleeping() && !animating() && !wakeFace && !idleBuddy && page == Page::Home && (peek || (online && mode == Mode::Clock)); }
+  bool showMeeting() const { return !sleeping() && !animating() && !wakeFace && !idleBuddy && page == Page::Home && meetingActive && !meetingDismissed && !showClock(); }
   void back() {
     if (timerDone) { timerDone = false; return; }
     if (reminder) { reminder = false; return; }
@@ -107,13 +123,19 @@ struct Ui {
   }
   void handle(Gesture gesture, uint32_t now) {
     if (gesture == Gesture::None) return;
+    if(sleeping()) { wake(now);return; } // The first gesture only wakes, including in Auto.
     noteActivity(now);
-    if (gesture == Gesture::DoubleTap) { back(); return; }
+    if (gesture == Gesture::DoubleTap) {
+      if(page==Page::Home && !peek && !timerDone && !reminder) {
+        facePhase=FacePhase::Awake;wakeFace=false;peek=true;peekAt=now;
+      } else back();
+      return;
+    }
     if (timerDone) { timerDone = false; return; }
     if (reminder) { reminder = false; return; }
     if (gesture == Gesture::Tap) {
       switch (page) {
-        case Page::Home: if (!online || mode == Mode::Auto) { peek = true; peekAt = now; } break;
+        case Page::Home: break;
         case Page::Menu: menu = (menu + 1) % MenuCount; break;
         case Page::Modes: choice = (choice + 1) % 3; break;
         case Page::Timers: if (!timerRunning) choice = (choice + 1) % 4; break;
@@ -135,7 +157,7 @@ struct Ui {
       }
     } else if (gesture == Gesture::Hold) {
       switch (page) {
-        case Page::Home: page = Page::Menu; peek = false; break;
+        case Page::Home: page = Page::Menu; peek = false;wakeFace=false;facePhase=FacePhase::Awake; break;
         case Page::Menu:
           page = static_cast<Page>(static_cast<uint8_t>(Page::Calendar) + menu);
           choice = page == Page::Modes ? static_cast<uint8_t>(mode) : 0;

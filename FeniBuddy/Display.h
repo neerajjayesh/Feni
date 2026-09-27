@@ -1,4 +1,5 @@
 #pragma once
+#include "FaceMotion.h"
 void heading(const String &title,bool white=false) {
   canvas.text(6,4,canvas.fit(title,148),1,white?1:2);canvas.drawFastHLine(6,24,148,white?1:3);
 }
@@ -38,7 +39,7 @@ void clockScreen() {
 void setupScreen() {
   heading("WI-FI SETUP");
   if(apActive){canvas.text(7,32,"Join Feni-Setup");canvas.small(8,56,"Password: fenibuddy");canvas.text(8,75,"192.168.4.1");canvas.small(8,101,"Choose 2.4 GHz Wi-Fi");}
-  else wrapped(networkMessage,35,3);footer("Tap clock / Hold menu");
+  else wrapped(networkMessage,35,3);footer("Double clock / Hold menu");
 }
 void eventCard(const Event &event,bool alert,bool meeting=false) {
   uint32_t now=epochNow();bool running=!event.allDay && now>=event.start && now<event.end;
@@ -63,15 +64,29 @@ void eventCard(const Event &event,bool alert,bool meeting=false) {
 
 bool buddyFaceVisible=false;
 uint32_t buddyFaceAt=0;
+void drawPcOverlay() {buddy::drawPcDetails(canvas,pc,millis());}
 void renderUi(uint32_t now) {
   static uint32_t lastFrame=0,nextMood=0;
+  static bool specialWasVisible=false;
   if(now-lastFrame<40)return;lastFrame=now;
-  bool face=ui.page==buddy::Page::Home && (ui.online || ui.idleBuddy) && !ui.showClock() && !ui.showMeeting() && !ui.timerDone && !ui.reminder;
+  canvas.beforeDisplay=nullptr;
+  bool face=ui.page==buddy::Page::Home && (ui.online || ui.idleBuddy || ui.sleeping() || ui.animating() || ui.wakeFace) && !ui.showClock() && !ui.showMeeting() && !ui.timerDone && !ui.reminder;
+  pc.update(now,face && !ui.sleeping() && !ui.animating());
   canvas.palette(buddy::accent(ui.theme),face);
   if(face){
+    if(ui.sleeping() || ui.animating()) {
+      ui.startFaceFrame(now);
+      if(!buddyFaceVisible)buddyFaceAt=now;
+      buddyFaceVisible=true;specialWasVisible=true;frameContainsPassword=false;
+      canvas.clearDisplay();buddy::drawFacePhase(canvas,ui.facePhase,now-ui.facePhaseAt,now);canvas.display();return;
+    }
+    if(specialWasVisible) {
+      specialWasVisible=false;eyes.open();eyes.eyeLheightCurrent=eyes.eyeRheightCurrent=38;
+      eyes.eyeLheightNext=eyes.eyeRheightNext=38;eyes.eyeLy=eyes.eyeRy=45;
+    }
     if(!buddyFaceVisible){buddyFaceAt=now;canvas.clearDisplay();eyes.open();eyes.blink();}
     if(int32_t(now-nextMood)>=0){eyes.setMood(random(4)==0?HAPPY:DEFAULT);nextMood=now+random(7000,15000);}
-    buddyFaceVisible=true;eyes.update();frameContainsPassword=false;return;
+    buddyFaceVisible=true;canvas.beforeDisplay=drawPcOverlay;eyes.update();canvas.beforeDisplay=nullptr;frameContainsPassword=false;return;
   }
   buddyFaceVisible=false;canvas.clearDisplay();frameContainsPassword=ui.page==buddy::Page::WifiPassword;
   if(ui.timerDone){canvas.fillRect(4,29,152,63,2);canvas.center(43,"TIME IS UP",2,0);footer("Double tap to go back");}

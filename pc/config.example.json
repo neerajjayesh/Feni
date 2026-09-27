@@ -1,0 +1,5 @@
+{
+  "url": "http://feni.local",
+  "gaming": ["steam", "steamwebhelper", "EpicGamesLauncher", "Battle.net", "Playnite.DesktopApp", "Playnite.FullscreenApp"],
+  "coding": ["Code", "Code - Insiders", "devenv", "idea64", "pycharm64"]
+}

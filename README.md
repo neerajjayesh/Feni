@@ -3,7 +3,7 @@
 An ESP8266 desk companion with a 1.8-inch TFT: a centered animated face, clock,
 Google Calendar reminders, countdown timers, and WLED preset control.
 
-**Current firmware: v3.2.2.** The original working baseline is tagged `v3.1.1`. Designed for a NodeMCU ESP8266 and an ST7735
+**Current firmware: v3.3.0.** The original working baseline is tagged `v3.1.1`. Designed for a NodeMCU ESP8266 and an ST7735
 128 x 160 SPI display, used in landscape at 160 x 128.
 
 ## Components
@@ -48,7 +48,9 @@ variants may need changes in [Hardware.h](FeniBuddy/Hardware.h).
 ## Features
 
 - Centered RoboEyes animations and Buddy / Clock / Auto display modes.
-- In Auto, a tap shows the clock for ten seconds. The clock remains white.
+- Startup and wake animations; sleep after five minutes without interaction.
+- [Windows PC companion](docs/PC.md) with connection, gaming and coding animations.
+- In Auto, a double tap shows the clock for ten seconds. The clock remains white.
 - After 60 seconds without input, any screen returns to the face; timers continue.
 - Cyan, Orange, Green and Purple accent themes, including the eyes.
 - Larger, bold FreeSans text and filled rectangular menu selections.
@@ -65,9 +67,9 @@ variants may need changes in [Hardware.h](FeniBuddy/Hardware.h).
 
 | Action | Result |
 | --- | --- |
-| Tap FLASH | Next item; temporary clock in Auto |
+| Tap FLASH | Wake from sleep / next menu item |
 | Hold FLASH for about 0.9 seconds | Open menu / select item |
-| Double tap FLASH | Back, or dismiss an alert |
+| Double tap FLASH | Clock on Home / Back in menus / dismiss an alert |
 
 Release FLASH during power-up/reset so the ESP8266 starts normally. Holding it
 at reset selects the bootloader. See [Usage](docs/USAGE.md) for menu details.
@@ -77,7 +79,8 @@ at reset selects the bootloader. See [Usage](docs/USAGE.md) for menu details.
 - `FeniBuddy/`: firmware sketch and headers, build helpers, and host tests.
 - `FeniBuddy/calendar/`: read-only Google Apps Script bridge and manifest.
 - `FeniBuddy/src/roboeyes/`: bundled RoboEyes source with its original license.
-- `docs/`: installation, Calendar setup, controls and testing instructions.
+- `docs/`: installation, Calendar setup, PC connection, controls and testing instructions.
+- `pc/`: Windows companion, installer and example app mappings.
 
 Saved device credentials, personal Calendar deployments, flash backups and build
 outputs are intentionally not part of this repository. Wi-Fi and Calendar keys

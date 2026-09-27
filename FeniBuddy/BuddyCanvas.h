@@ -9,6 +9,7 @@ class BuddyCanvas : public Adafruit_GFX {
  public:
   explicit BuddyCanvas(Adafruit_ST7735 &panel) : Adafruit_GFX(160,128), panel_(panel) {}
   uint32_t frames=0;
+  void (*beforeDisplay)()=nullptr;
   uint16_t ink=0xffff;
   static constexpr size_t BmpBytes=61494;
   void palette(uint16_t accent, bool face=false) {
@@ -50,6 +51,7 @@ class BuddyCanvas : public Adafruit_GFX {
     setFont(nullptr);setTextSize(1);setTextColor(colour);setTextWrap(false);setCursor(x,y);print(value);
   }
   void display() {
+    if(beforeDisplay) beforeDisplay();
     panel_.startWrite();panel_.setAddrWindow(0,0,160,128);
     for(int y=0;y<128;++y) {
       for(int x=0;x<160;++x) line_[x]=__builtin_bswap16(colourAt(x,y));

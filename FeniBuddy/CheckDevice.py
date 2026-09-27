@@ -27,7 +27,7 @@ def request(board, command, timeout=4):
                 state = json.loads(line)
             except ValueError:
                 continue
-            if state.get('firmware') != 'feni-buddy-3.2.2':
+            if state.get('firmware') != 'feni-buddy-3.3.0':
                 raise RuntimeError('Unexpected firmware: ' + str(state.get('firmware')))
             return state
         if command != 'STATUS' and line == 'OK':
@@ -68,7 +68,8 @@ def smoke(board):
     check(current['page'] == 0, 'Back returns to the home screen')
     if not current['wifi'] or current['mode'] == 2:
         request(board, 'TAP')
-        check(status()['peek'], 'Single tap opens temporary clock')
+        request(board, 'DOUBLE')
+        check(status()['peek'], 'Double tap opens temporary clock')
         request(board, 'BACK')
         check(not status()['peek'], 'Back dismisses temporary clock')
     check(current['menuCount'] == 5, 'Main menu has five entries')

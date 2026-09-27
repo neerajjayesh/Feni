@@ -1,5 +1,15 @@
 # Changelog
 
+## 3.3.0
+
+- Add centered startup and wake animations, with sleep after five minutes idle.
+- A single press wakes the sleeping buddy without opening the Auto clock.
+- Double press opens the clock on Home; double press remains Back in menus.
+- Add local Windows PC integration with flowing connection bolts, a gaming
+  headset and coding brackets/cursor. Passive heartbeats do not prevent sleep.
+- Include a Windows companion installer, app mappings and sign-in startup.
+- Preserve the white clock, bold Calendar cards, themes and saved connections.
+
 ## 3.2.2
 
 - Return to the buddy face after 60 seconds without button or web-control activity.

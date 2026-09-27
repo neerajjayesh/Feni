@@ -16,6 +16,7 @@
 #include <stddef.h>
 #include "Hardware.h"
 #include "BuddyCore.h"
+#include "PcActivity.h"
 #include "BuddyCanvas.h"
 #include "Settings.h"
 
@@ -23,6 +24,7 @@ Adafruit_ST7735 tft(TFT_CS,TFT_DC,TFT_RESET);
 BuddyCanvas canvas(tft);
 buddy::Touch touch;
 buddy::Ui ui;
+buddy::PcState pc;
 ESP8266WebServer server(80);
 DNSServer dns;
 bool apActive=false, lanActive=false, integrationBusy=false;
@@ -66,12 +68,12 @@ void setup() {
   if(settings.deployment[0]) calendarMessage="Waiting for first sync";
   if(settings.wledIp[0]) wledMessage="Hold a preset to apply";
   configTime(settings.timezone,"pool.ntp.org","time.google.com");
-  startNetwork();renderUi(millis());
+  ui.beginStartup(millis());startNetwork();renderUi(millis());
   // This callback only samples controls and changes RAM state. No I/O, delay or flash writes.
   // It runs at network yields as well, retaining gestures during HTTPS requests.
   if(!schedule_recurrent_function_us([](){ sampleControls();return true; },10000))
     Serial.println(F("Warning: background input sampler unavailable"));
-  Serial.println(F("FeniBuddy 3.2.2 ready. STATUS for diagnostics."));
+  Serial.println(F("FeniBuddy 3.3.0 ready. STATUS for diagnostics."));
 }
 
 void loop() {
@@ -103,7 +105,7 @@ void loop() {
   pollWledVerification();
   // HTTPS can block drawing. Sync on the face after its entry animation settles;
   // the idle return provides a sync window even during long-running timers.
-  if(ui.page==buddy::Page::Home && buddyFaceVisible && millis()-buddyFaceAt>=1000 &&
+  if(ui.page==buddy::Page::Home && buddyFaceVisible && !ui.animating() && !pc.introPlaying && millis()-buddyFaceAt>=1000 &&
      !ui.showClock() && !ui.showMeeting() && !ui.timerDone && !ui.reminder &&
      !ui.peek && !wledVerifyPending && millis()-lastInputAt>5000 && !touch.down && !touch.pending) pollCalendar();
   yield();
