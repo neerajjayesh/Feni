@@ -27,10 +27,11 @@ uint32_t rnd() { rngState ^= rngState << 13; rngState ^= rngState >> 17; rngStat
 // Native grid 16 x 10 units (matches your image):
 //   body  x2..13, y0..7   arms x0..1 / x14..15, y4..5
 //   eyes  1x2 holes at x4 and x11, y2..3      legs x3,5,10,12  y8..9
-void drawLogo(int ox, int oy, int s, int armL, int armR, uint8_t legLift,
+void drawLogo(int ox, int oy, float s, int armL, int armR, uint8_t legLift,
               int eyeTop, int eyeH) {
   auto R = [&](int x, int y, int w, int h, uint8_t c) {
-    rectC(ox + x * s, oy + y * s, w * s, h * s, c);
+    int left=int(x*s),top=int(y*s);
+    rectC(ox+left,oy+top,int(w*s+0.5f),int(h*s+0.5f),c);
   };
   R(2, 0, 12, 8, P_LOGO);                 // body
   R(0, 4 + armL, 2, 2, P_LOGO);           // left arm
@@ -121,7 +122,8 @@ void sceneCode(uint32_t now, bool attention) {
     int b = blinkPhase(now);
     if (b == 1) { eyeTop = 4; eyeH = 1; } else if (b == 2) eyeH = 0;
   }
-  drawLogo(logoX, 2, 2, armL, armR, legLift, eyeTop, eyeH);
+  // Keep the smaller normal creature centered, with its feet above the code.
+  drawLogo(attention?logoX:8, attention?2:7, attention?2.0f:1.5f, armL, armR, legLift, eyeTop, eyeH);
 
   // code lines (typing pauses while Claude is waiting for you)
   if (!attention) typingStep(now);

@@ -1,7 +1,7 @@
 # Feni Studio
 
 Studio manages **C++ animation code**, USB builds and application reactions for
-Feni v3.6.1. It runs on Windows 10/11 with .NET Framework 4.7.2 or newer. There is
+Feni v3.6.2. It runs on Windows 10/11 with .NET Framework 4.7.2 or newer. There is
 no video/frame library, PNG packer or animation-file upload workflow.
 
 ## Install
@@ -122,7 +122,8 @@ normal prompting (typing at a keyboard), thinking (small logo and three bouncing
 dots), and needs input (typing scene with waving arms and an exclamation mark).
 The normal scene is rendered at 75% size in a centered 120x96 area, leaving
 20-pixel side margins and 16-pixel top/bottom margins. Thinking and attention
-retain their original size. The logo is always RGB #DE7B58, independent of the selected accent. Dots, alert,
+retain their original size. Within the normal scene, the creature is now 72x45
+pixels, centered above the existing typing animation. The logo is always RGB #DE7B58, independent of the selected accent. Dots, alert,
 code lines and bubble use the accent and its darker shade. The white clock is
 unchanged. Blank AI replacement code selects these built-in scenes.
 

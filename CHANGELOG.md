@@ -1,5 +1,9 @@
 # Changelog
 
+## 3.6.2
+
+- Reduce the normal AI creature another 25%, centered above the typing scene.
+
 ## 3.6.1
 
 - Scale the normal AI creature and typing scene to 75%, centered with margins.
