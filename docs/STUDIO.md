@@ -1,7 +1,7 @@
 # Feni Studio
 
 Studio manages **C++ animation code**, USB builds and application reactions for
-Feni v3.6.0. It runs on Windows 10/11 with .NET Framework 4.7.2 or newer. There is
+Feni v3.6.1. It runs on Windows 10/11 with .NET Framework 4.7.2 or newer. There is
 no video/frame library, PNG packer or animation-file upload workflow.
 
 ## Install
@@ -97,8 +97,9 @@ Hotstar, NetMirror / net77.cc and Cineby / cineby.rocks. YouTube is excluded.
 Browser rules require both the browser executable and the service name/domain
 in the foreground window title; they do not inspect URLs or background tabs.
 A player that omits the service from its title needs an additional title rule.
-AI includes Antigravity and the Codex desktop process (`ChatGPT.exe`), plus
-`Codex.exe`. Ordinary code editors no longer select AI by default. Gaming includes `cs2.exe` (Steam game 730).
+AI includes Antigravity, Antigravity IDE, Claude, ChatGPT and Codex desktop
+processes. Browser-title rules also recognise Claude and ChatGPT in supported
+browsers. Ordinary code editors do not select AI by default. Gaming includes `cs2.exe` (Steam game 730).
 Existing installations preserve saved rules; edit App rules to adopt these defaults.
 **Title contains (optional)** is case-insensitive and applies only to Foreground
 rules. Leave it blank for ordinary executable matching.
@@ -119,7 +120,9 @@ provides Windows foreground detection and local device messages.
 AI replaces Coding in slot 5. The supplied pixel-logo animation has three scenes:
 normal prompting (typing at a keyboard), thinking (small logo and three bouncing
 dots), and needs input (typing scene with waving arms and an exclamation mark).
-The logo is always RGB #DE7B58, independent of the selected accent. Dots, alert,
+The normal scene is rendered at 75% size in a centered 120x96 area, leaving
+20-pixel side margins and 16-pixel top/bottom margins. Thinking and attention
+retain their original size. The logo is always RGB #DE7B58, independent of the selected accent. Dots, alert,
 code lines and bubble use the accent and its darker shade. The white clock is
 unchanged. Blank AI replacement code selects these built-in scenes.
 

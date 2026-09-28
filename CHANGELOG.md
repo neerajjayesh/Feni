@@ -1,5 +1,11 @@
 # Changelog
 
+## 3.6.1
+
+- Scale the normal AI creature and typing scene to 75%, centered with margins.
+- Add Antigravity IDE and Claude desktop matching, plus Claude/ChatGPT browser
+  title rules. Preserve the fixed orange logo and other scene sizes.
+
 ## 3.6.0
 
 - Replace Coding with AI for Antigravity and Codex; retain wire category 2 and slot 5.

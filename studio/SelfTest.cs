@@ -16,7 +16,7 @@ namespace FeniStudio {
                 bool rejected=false;try{using(var d=new DeviceClient(url)){} }catch(ArgumentException){rejected=true;}Check(rejected,"Destination guard");
             }
             var json=new System.Web.Script.Serialization.JavaScriptSerializer();
-            var migrated=json.Deserialize<StudioConfig>("{\"Folder\":\"old\",\"Files\":[],\"RunRules\":false}");Check(!migrated.RunRules&&migrated.Rules.Count==10,"Frame config migration");
+            var migrated=json.Deserialize<StudioConfig>("{\"Folder\":\"old\",\"Files\":[],\"RunRules\":false}");Check(!migrated.RunRules&&migrated.Rules.Count==12,"Frame config migration");
             var entertainment=new StudioConfig().Rules;
             Check(Slots.Choose(entertainment,"Code",new string[0])==6,"Ordinary editor is no longer AI");
             Check(AiStatus.Classify(new[]{"Send","New task"})==0,"Prompting default");
@@ -28,8 +28,11 @@ namespace FeniStudio {
             Check(Slots.Choose(entertainment,"vlc.exe",new string[0],"Movie")==7,"VLC entertainment");
             Check(Slots.Choose(entertainment,"chrome",new string[0],"Example video - YouTube")==6,"YouTube removed");
             foreach(string title in new[]{"Prime Video","primevideo","JioHotstar","NetMirror","net77.cc","Cineby","cineby.rocks"})Check(Slots.Choose(entertainment,"msedge",new string[0],title)==7,"Streaming title: "+title);
-            foreach(string app in new[]{"Antigravity","ChatGPT","Codex"})Check(Slots.Choose(entertainment,app,new string[0])==5,"Coding: "+app);
+            foreach(string app in new[]{"Antigravity","Antigravity IDE","Claude","ChatGPT","Codex"})Check(Slots.Choose(entertainment,app,new string[0])==5,"Coding: "+app);
             Check(Slots.Choose(entertainment,"cs2.exe",new[]{"steam"})==4,"Actual CS2 executable");
+            Check(Slots.Choose(entertainment,"chrome",new string[0],"New conversation - Claude")==5,"Claude browser AI");
+            Check(Slots.Choose(entertainment,"msedge",new string[0],"ChatGPT")==5,"ChatGPT browser AI");
+            Check(Slots.Choose(entertainment,"notepad",new string[0],"Claude notes")==6,"AI title needs a browser");
             bool fg;var runningRule=new[]{new AppRule {Applications="steam, cs2",Trigger="Running",Slot=4}};
             Check(Slots.Choose(runningRule,"chrome",new[]{"steam"},"",out fg)==4&&!fg,"Background does not keep awake");
             Check(Slots.Choose(runningRule,"cs2",new[]{"steam","cs2"},"",out fg)==4&&fg,"Foreground game keeps awake even with launcher first");

@@ -24,13 +24,14 @@ namespace FeniStudio {
         public string FirmwareFolder=Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"firmware","FeniBuddy");
         public string Port="COM8";
         public List<AppRule> Rules=new List<AppRule> {
-            new AppRule {Name="AI",Applications="Antigravity, ChatGPT, Codex",Slot=5},
+            new AppRule {Name="AI",Applications="Antigravity, Antigravity IDE, Claude, ChatGPT, Codex",Slot=5},
+            BrowserRule("Claude",5), BrowserRule("ChatGPT",5),
             new AppRule {Name="Gaming",Applications="steam, steamwebhelper, EpicGamesLauncher, Battle.net, Playnite.DesktopApp, cs2",Slot=4},
             new AppRule {Name="VLC",Applications="vlc",Slot=7},
             BrowserRule("Prime Video"), BrowserRule("PrimeVideo"), BrowserRule("Hotstar"),
             BrowserRule("NetMirror"), BrowserRule("net77.cc"), BrowserRule("Cineby"), BrowserRule("cineby.rocks")
         };
-        static AppRule BrowserRule(string title){return new AppRule {Name=title,Applications="chrome, msedge, firefox, brave, opera, opera_gx, vivaldi",TitleContains=title,Slot=7};}
+        static AppRule BrowserRule(string title,int slot=7){return new AppRule {Name=title,Applications="chrome, msedge, firefox, brave, opera, opera_gx, vivaldi",TitleContains=title,Slot=slot};}
         public bool RunRules=true;
         public static readonly string DirectoryPath=Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"FeniStudio");
         public static readonly string ConfigPath=Path.Combine(DirectoryPath,"config.json");

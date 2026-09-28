@@ -166,10 +166,13 @@ template<class Canvas> void draw(Canvas &canvas,uint8_t status,uint32_t now) {
   memset(cur,0,sizeof(cur));
   if(state==ST_THINKING)sceneThinking(now);else sceneCode(now,state==ST_ATTENTION);
   static const uint8_t colours[]={0,1,2,2,2,3,2,3};
+  // The normal prompting scene uses a centered 120x96 viewport.
+  const int cell=state==ST_CODING?3:CELL;
+  const int left=(160-GW*cell)/2,top=(128-GH*cell)/2;
   for(int y=0;y<GH;y++)for(int x=0;x<GW;) {
     uint8_t colour=colours[cur[y][x]];int end=x+1;
     while(end<GW && colours[cur[y][end]]==colour)end++;
-    canvas.fillRect(x*CELL,y*CELL,(end-x)*CELL,CELL,colour);x=end;
+    canvas.fillRect(left+x*cell,top+y*cell,(end-x)*cell,cell,colour);x=end;
   }
 }
 } // namespace FeniAI
