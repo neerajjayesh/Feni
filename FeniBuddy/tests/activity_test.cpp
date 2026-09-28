@@ -36,7 +36,8 @@ int main() {
   Ui meeting;meeting.update(300000);assert(meeting.sleeping());meeting.meetingActive=true;meeting.wakeForMeeting(301000);assert(meeting.showMeeting());
   PcState pc;pc.receive(PcActivity::Gaming,100);pc.update(100,false);assert(pc.introPending && !pc.introPlaying);
   pc.update(200,true);assert(pc.introPlaying);pc.receive(PcActivity::Coding,300);assert(pc.introAt==200 && !pc.introPending);
-  pc.update(2600,true);assert(!pc.introPlaying && pc.connected && pc.activity==PcActivity::Coding);
+  pc.update(4399,true);assert(pc.introPlaying);
+  pc.update(4400,true);assert(!pc.introPlaying && pc.connected && pc.activity==PcActivity::Coding);
   pc.update(45299,true);assert(pc.connected);pc.update(45300,true);assert(!pc.connected && pc.activity==PcActivity::Neutral);
   pc.receive(PcActivity::Gaming,46000);assert(pc.introPending);
   pc.receive(PcActivity::Neutral,92000);assert(pc.connectedAt==92000); // Expired without an update.

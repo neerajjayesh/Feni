@@ -3,7 +3,7 @@
 namespace buddy {
 enum class PcActivity : uint8_t { Neutral, Gaming, Coding, Custom };
 struct PcState {
-  static constexpr uint32_t Timeout=45000, IntroDuration=2400;
+  static constexpr uint32_t Timeout=45000, IntroDuration=4200;
   bool connected=false, introPending=false, introPlaying=false;
   PcActivity activity=PcActivity::Neutral;
   uint32_t seenAt=0, connectedAt=0, introAt=0;

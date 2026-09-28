@@ -1,5 +1,14 @@
 # Build and verification
 
+## PC-connected animation / v3.5.3
+
+Host tests verify the 4200 ms connection duration, entry/exit flash boundaries,
+typed-text drawing and introduction priority over activity overlays. Firmware
+and Studio builds and existing host suites pass. A live ESP8266 upload verified
+duration metadata, the eye lightning and complete text through framebuffer
+captures, intro completion, no restart on another heartbeat, a white clock and
+preservation of saved theme/mode. Physical FLASH presses were not automated.
+
 ## Gaming/popcorn / v3.5.1
 
 Host checks cover overlay drawing across complete cycles, fade envelopes,

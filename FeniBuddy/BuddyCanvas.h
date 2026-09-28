@@ -7,6 +7,7 @@
 // 2-bit framebuffer: 5 KB, with row accents for event cards. TLS retains its IRAM heap.
 class BuddyCanvas : public Adafruit_GFX {
  public:
+  using Adafruit_GFX::width;
   explicit BuddyCanvas(Adafruit_ST7735 &panel) : Adafruit_GFX(160,128), panel_(panel) {}
   uint32_t frames=0;
   void (*beforeDisplay)()=nullptr;

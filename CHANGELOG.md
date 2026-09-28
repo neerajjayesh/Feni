@@ -1,5 +1,13 @@
 # Changelog
 
+## 3.5.3
+
+- Add the supplied 4.2-second PC-connected animation: lightning cut-outs in the
+  eyes, entry flash, large bolt with typed text, and exit flash.
+- Align cut-outs to the centered eyes and pause blinking during the introduction.
+- Upgrade Studio's untouched built-in connection duration to 4200 ms while
+  preserving custom code and durations.
+
 ## 3.5.2
 
 - Lower gaming and popcorn eyes by 12 pixels from the top-edge position, including

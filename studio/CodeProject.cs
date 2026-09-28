@@ -10,9 +10,9 @@ using System.Web.Script.Serialization;
 namespace FeniStudio {
     public class CodeProject {
         public string[] Code=new string[15];
-        public int[] Duration=new[]{1800,2400,0,1400,0,0,0,0,0,0,0,0,0,0,0};
+        public int[] Duration=new[]{1800,4200,0,1400,0,0,0,0,0,0,0,0,0,0,0};
         public static string ProjectPath {get{return Path.Combine(StudioConfig.DirectoryPath,"animations-code.json");}}
-        public static CodeProject Load(){var p=File.Exists(ProjectPath)?new JavaScriptSerializer().Deserialize<CodeProject>(File.ReadAllText(ProjectPath)):new CodeProject();p.Validate();return p;}
+        public static CodeProject Load(){var p=File.Exists(ProjectPath)?new JavaScriptSerializer().Deserialize<CodeProject>(File.ReadAllText(ProjectPath)):new CodeProject();p.Validate();if(String.IsNullOrWhiteSpace(p.Code[1])&&p.Duration[1]==2400)p.Duration[1]=4200;return p;}
         public void Validate(){if(Code==null||Code.Length!=15||Duration==null||Duration.Length!=15)throw new InvalidDataException("Invalid animation code project; the original file was preserved.");for(int i=0;i<15;i++){Code[i]=Code[i]??"";if(Code[i].Length>100000)throw new InvalidDataException("Keep each animation under 100,000 characters.");if(Slots.Event(i)&&(Duration[i]<100||Duration[i]>10000))throw new InvalidDataException("Event duration must be 100–10000 ms.");}}
         public void Save(){Validate();Directory.CreateDirectory(StudioConfig.DirectoryPath);string temp=ProjectPath+".new";File.WriteAllText(temp,new JavaScriptSerializer().Serialize(this));if(File.Exists(ProjectPath))File.Replace(temp,ProjectPath,ProjectPath+".bak");else File.Move(temp,ProjectPath);}
         [ScriptIgnore]

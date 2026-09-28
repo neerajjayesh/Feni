@@ -2,6 +2,7 @@
 #include "BuddyCore.h"
 #include "PcActivity.h"
 #include "FeniAnimations-pop-game.h"
+#include "FeniPcConnected.h"
 namespace buddy {
 inline int openingHeight(uint32_t elapsed,uint32_t duration) {
   if(elapsed>=duration) return 38;
@@ -28,20 +29,15 @@ template<class Canvas> void drawPcDetails(Canvas &c,const PcState &pc,uint32_t n
     if(!pc.introPlaying)FeniAnim::drawGamer(c,elapsed%8000,8000,1,0);
   } else if(pc.activity==PcActivity::Custom && pc.customSlot==7) {
     if(!pc.introPlaying)FeniAnim::drawPopcorn(c,elapsed%9000,9000,1,0);
-  } else if(pc.activity==PcActivity::Coding) {
+  } else if(pc.activity==PcActivity::Coding && !pc.introPlaying) {
     c.drawLine(24,54,17,63,1);c.drawLine(17,63,24,72,1);
     c.drawLine(136,54,143,63,1);c.drawLine(143,63,136,72,1);
     c.drawFastHLine(69,96,12,3);
     if((now/550)%2==0)c.fillRect(84,93,7,3,1);
   }
   if(pc.introPlaying) {
-    // Three small bolts flow across a track beneath the eyes.
-    uint32_t elapsed=now-pc.introAt;
-    for(int i=0;i<3;++i) {
-      int x=8+((elapsed/18+i*48)%140);
-      c.drawLine(x+4,88,x,94,i==1?1:3);c.drawFastHLine(x,94,5,i==1?1:3);c.drawLine(x+4,94,x,100,i==1?1:3);
-    }
-    c.center(108,"PC connected",1,1);
+    FeniAnim::EyeGeom eg;eg.lx=53;eg.rx=107;eg.cy=64;eg.w=34;eg.h=38;
+    FeniAnim::drawPcConnected(c,elapsed,eg,1,0);
   }
 }
 }

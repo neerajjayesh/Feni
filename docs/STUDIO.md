@@ -1,7 +1,7 @@
 # Feni Studio
 
 Studio manages **C++ animation code**, USB builds and application reactions for
-Feni v3.5.2. It runs on Windows 10/11 with .NET Framework 4.7.2 or newer. There is
+Feni v3.5.3. It runs on Windows 10/11 with .NET Framework 4.7.2 or newer. There is
 no video/frame library, PNG packer or animation-file upload workflow.
 
 ## Install

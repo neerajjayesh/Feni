@@ -92,7 +92,9 @@ void renderUi(uint32_t now) {
     if(!buddyFaceVisible){buddyFaceAt=now;canvas.clearDisplay();eyes.open();eyes.blink();}
     bool raised=pc.connected && !pc.introPlaying && (activeCodeSlot==4||activeCodeSlot==7);
     positionForOverlay(eyes,raised);
-    if(raised)eyes.setMood(DEFAULT);
+    eyes.setAutoblinker(!pc.introPlaying);
+    if(pc.introPlaying)eyes.open();
+    if(raised||pc.introPlaying)eyes.setMood(DEFAULT);
     else if(int32_t(now-nextMood)>=0){eyes.setMood(random(4)==0?HAPPY:DEFAULT);nextMood=now+random(7000,15000);}
     buddyFaceVisible=true;canvas.beforeDisplay=drawPcOverlay;eyes.update();canvas.beforeDisplay=nullptr;frameContainsPassword=false;return;
   }
