@@ -130,7 +130,9 @@ code lines and bubble use the accent and its darker shade. The white clock is
 unchanged. Blank AI replacement code selects these built-in scenes.
 
 Studio checks the foreground window every two seconds. For AI it inspects
-visible, enabled accessibility button labels locally. Stop controls indicate
+visible accessibility button labels locally. Question cards are recognised even
+when their Send/Submit button is disabled until an answer is selected. Only
+enabled approval and Stop controls are used for those states. Stop controls indicate
 thinking; recognised approval or question controls indicate needs input and
 take priority. Otherwise the normal prompting scene is used. This reads no edit
 values and sends no button labels, warning text, prompts or conversation text

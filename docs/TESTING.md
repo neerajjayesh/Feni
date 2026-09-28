@@ -13,8 +13,17 @@ Before the final size/typing adjustments, live ESP8266 checks injected aiState=3
 and verified X eyes, the fixed orange logo
 in Cyan/Purple, return to the smaller normal scene, invalid-state rejection and
 the white clock. Saved preferences were restored and Calendar synced.
-The final half-size limit scene and creature-only normal scene pass host drawing
-checks; their final USB upload requires the device to be reconnected.
+After reconnecting USB, final captures verified the centered 80x64 dead scene
+and the normal 72x45 orange creature with no typing lines or cursor.
+
+## AI question-card detection
+
+Studio self-tests pass for disabled Send/Submit question controls, enabled
+approval pairs, ordinary composer buttons and disabled approval controls. A
+delayed accessibility read is retained for the next poll without starting an
+overlapping worker; a different foreground window does not inherit its state.
+The updated companion is installed. Real pending question/approval cards have
+not yet been verified live; recognition depends on supported accessible labels.
 
 ## AI scenes / v3.6.0
 

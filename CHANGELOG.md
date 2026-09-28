@@ -2,6 +2,9 @@
 
 ## 3.6.3
 
+- Recognise question cards with disabled Send/Submit controls, and retain slow
+  accessibility results for the next foreground poll.
+
 - Add the supplied limit-exhausted scene with slumped orange creature, X eyes,
   pulsing R.I.P. lettering and drifting specks, in a centered half-size scene.
 - Remove typing lines and cursor from the normal AI scene.

@@ -24,6 +24,16 @@ namespace FeniStudio {
             Check(AiStatus.Classify(new[]{"Stop","Allow once"})==2,"Approval takes priority");
             Check(AiStatus.Classify(new[]{"Submit answers"})==2,"Question state");
             Check(AiStatus.Classify(new[]{"Stop","Send","Skip"})==2,"Codex question panel");
+            Check(AiStatus.Classify(new[]{"Stop","Skip"},null,new[]{"Stop","Skip","Send"})==2,"Disabled Send still identifies a question");
+            Check(AiStatus.Classify(new[]{"Stop"},null,new[]{"Stop","Submit answers"})==2,"Disabled answer submission");
+            Check(AiStatus.Classify(new[]{"Send"},null,new[]{"Send"})==0,"Ordinary composer is not a question");
+            Check(AiStatus.Classify(new[]{"Allow","Deny"})==2,"Approval card");
+            Check(AiStatus.Classify(new string[0],null,new[]{"Allow","Deny"})==0,"Disabled approval actions alone are not pending");
+            int reads=0;var slowWindow=new ForegroundInfo {Handle=new IntPtr(123)};
+            AiStatus.ReadAsync(slowWindow,()=>{System.Threading.Interlocked.Increment(ref reads);System.Threading.Thread.Sleep(1600);return 2;}).GetAwaiter().GetResult();
+            System.Threading.Thread.Sleep(600);
+            Check(AiStatus.ReadAsync(slowWindow,()=>{reads++;return 0;}).GetAwaiter().GetResult()==2&&reads==1,"Slow accessibility result is delivered on the next poll");
+            Check(AiStatus.ReadAsync(new ForegroundInfo {Handle=new IntPtr(456)},()=>0).GetAwaiter().GetResult()==0,"Previous window state does not leak");
             Check(AiStatus.Classify(new[]{"Stop by the store","Accept cookies"})==0,"No arbitrary text matching");
             foreach(string notice in new[]{"You've hit your usage limit. Try later.","You have reached your weekly limit","Usage limit reached","Session limit exhausted","You're out of credits","Quota exceeded"})Check(AiStatus.Classify(new[]{"Stop","Allow once"},new[]{notice})==3,"Limit notice: "+notice);
             foreach(string text in new[]{"Explain why usage limits exist","Usage limit remaining: 80%","Upgrade plan","Network error. Try again","Your context window is full"})Check(!AiStatus.IsLimitNotice(text),"Not a limit warning: "+text);
