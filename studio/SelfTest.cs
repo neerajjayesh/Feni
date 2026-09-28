@@ -16,11 +16,16 @@ namespace FeniStudio {
                 bool rejected=false;try{using(var d=new DeviceClient(url)){} }catch(ArgumentException){rejected=true;}Check(rejected,"Destination guard");
             }
             var json=new System.Web.Script.Serialization.JavaScriptSerializer();
-            var migrated=json.Deserialize<StudioConfig>("{\"Folder\":\"old\",\"Files\":[],\"RunRules\":false}");Check(!migrated.RunRules&&migrated.Rules.Count==4,"Frame config migration");
+            var migrated=json.Deserialize<StudioConfig>("{\"Folder\":\"old\",\"Files\":[],\"RunRules\":false}");Check(!migrated.RunRules&&migrated.Rules.Count==10,"Frame config migration");
             var entertainment=new StudioConfig().Rules;
             Check(Slots.Choose(entertainment,"vlc.exe",new string[0],"Movie")==7,"VLC entertainment");
-            Check(Slots.Choose(entertainment,"chrome",new string[0],"Example video - YouTube")==7,"YouTube title match");
-            Check(Slots.Choose(entertainment,"msedge",new string[0],"youtube")==7,"Case insensitive title match");
+            Check(Slots.Choose(entertainment,"chrome",new string[0],"Example video - YouTube")==6,"YouTube removed");
+            foreach(string title in new[]{"Prime Video","primevideo","JioHotstar","NetMirror","net77.cc","Cineby","cineby.rocks"})Check(Slots.Choose(entertainment,"msedge",new string[0],title)==7,"Streaming title: "+title);
+            foreach(string app in new[]{"Antigravity","ChatGPT","Codex"})Check(Slots.Choose(entertainment,app,new string[0])==5,"Coding: "+app);
+            Check(Slots.Choose(entertainment,"cs2.exe",new[]{"steam"})==4,"Actual CS2 executable");
+            bool fg;var runningRule=new[]{new AppRule {Applications="steam, cs2",Trigger="Running",Slot=4}};
+            Check(Slots.Choose(runningRule,"chrome",new[]{"steam"},"",out fg)==4&&!fg,"Background does not keep awake");
+            Check(Slots.Choose(runningRule,"cs2",new[]{"steam","cs2"},"",out fg)==4&&fg,"Foreground game keeps awake even with launcher first");
             Check(Slots.Choose(entertainment,"chrome",new string[0],"Other website")==6,"Ordinary browser stays neutral");
             Check(Slots.Choose(entertainment,"notepad",new[]{"chrome"},"YouTube notes")==6,"Title also requires matching application");
             Check(Slots.Choose(entertainment,"Code",new[]{"chrome"},"Editor")==5,"Background browser cannot override coding");

@@ -1,5 +1,20 @@
 # Build and verification
 
+## Foreground activity / v3.5.4
+
+Host tests cover wake in all three display modes for gaming/coding/custom
+activities, six minutes of active heartbeats without sleep, neutral/background
+sleep, activity-end and disconnect countdowns, rollover and the menu timeout.
+Studio checks cover streaming-title matches, YouTube exclusion, CS2/Antigravity/
+Codex process matching, and foreground reporting when a background launcher is
+listed before the active game. Firmware and Studio compile and self-tests pass.
+
+Live production firmware entered sleep with neutral heartbeats, then played its
+wake animation and Entertainment when a foreground activity arrived. Gaming,
+coding and another custom slot also selected correctly. Framebuffer capture
+confirmed the lower half-cropped popcorn bucket. Calendar synced and saved
+theme/mode were preserved. Browser/game launches were not automated.
+
 ## PC-connected animation / v3.5.3
 
 Host tests verify the 4200 ms connection duration, entry/exit flash boundaries,

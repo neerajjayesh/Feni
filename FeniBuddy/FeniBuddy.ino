@@ -48,7 +48,7 @@ void sampleControls() {
   bool active=(TOUCH_ENABLED && digitalRead(TOUCH_PIN)==(TOUCH_ACTIVE_HIGH ? HIGH : LOW)) || digitalRead(FLASH_BUTTON)==LOW;
   buddy::Gesture gesture=touch.poll(active,now);
   if(gesture!=buddy::Gesture::None || active) {lastInputAt=now;ui.noteActivity(now);}
-  ui.handle(gesture,now); ui.update(now);
+  ui.handle(gesture,now); ui.update(now,pc.keepsAwake(now));
 }
 
 #include "Calendar.h"
@@ -74,7 +74,7 @@ void setup() {
   // It runs at network yields as well, retaining gestures during HTTPS requests.
   if(!schedule_recurrent_function_us([](){ sampleControls();return true; },10000))
     Serial.println(F("Warning: background input sampler unavailable"));
-  Serial.println(F("FeniBuddy 3.5.3 ready. STATUS for diagnostics."));
+  Serial.println(F("FeniBuddy 3.5.4 ready. STATUS for diagnostics."));
 }
 
 void loop() {

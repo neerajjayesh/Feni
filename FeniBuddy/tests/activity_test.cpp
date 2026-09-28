@@ -43,8 +43,24 @@ int main() {
   pc.receive(PcActivity::Neutral,92000);assert(pc.connectedAt==92000); // Expired without an update.
   pc.receive(PcActivity::Coding,0xfffffff0);pc.update(uint32_t(0xfffffff0+45000UL),true);assert(!pc.connected);
   Ui idle;PcState active;
-  for(uint32_t now=0;now<=300000;now+=5000) {active.receive(PcActivity::Coding,now);active.update(now,true);idle.update(now);}
-  assert(active.connected && idle.sleeping()); // PC heartbeats are not user input.
+  for(uint32_t now=0;now<=600000;now+=5000) {active.receive(PcActivity::Coding,now);active.update(now,true);idle.update(now,active.keepsAwake(now));}
+  assert(active.connected && !idle.sleeping() && idle.idleBuddy && idle.activityAt==0);
+  // Every non-neutral foreground category wakes a sleeping buddy in every mode.
+  for(int mode=0;mode<3;mode++)for(int kind=1;kind<=3;kind++) {
+    Ui u;u.mode=static_cast<Mode>(mode);u.update(300000);assert(u.sleeping());
+    PcState p;p.receive(static_cast<PcActivity>(kind),300010);u.update(300010,p.keepsAwake(300010));
+    assert(u.facePhase==FacePhase::Waking && !u.showClock());u.startFaceFrame(300010);
+    u.update(301410,p.keepsAwake(301410));assert(!u.sleeping()&&!u.animating());
+    p.receive(PcActivity::Neutral,302000);u.update(302000,p.keepsAwake(302000));
+    u.update(601999);assert(!u.sleeping());u.update(602000);assert(u.sleeping());
+  }
+  Ui background;PcState bg;
+  for(uint32_t now=0;now<=300000;now+=5000){bg.receive(PcActivity::Gaming,now,false);background.update(now,bg.keepsAwake(now));}
+  assert(background.sleeping());bg.receive(PcActivity::Neutral,301000);assert(!bg.keepsAwake(301000));
+  active.receive(PcActivity::Custom,700000);idle.update(700000,active.keepsAwake(700000));
+  assert(active.keepsAwake(744999)&&!active.keepsAwake(745000));idle.update(745000,active.keepsAwake(745000));
+  idle.update(1044999);assert(!idle.sleeping());idle.update(1045000);assert(idle.sleeping());
+  active.receive(PcActivity::Gaming,0xfffffff0);assert(active.keepsAwake(20000)&&!active.keepsAwake(45000));
   int previous=0;for(unsigned t=0;t<=1800;t+=20) {int height=openingHeight(t,1600);assert(height>=previous && height<=38);previous=height;}
   Canvas canvas;for(unsigned t=0;t<=1800;t+=20)drawFacePhase(canvas,FacePhase::Startup,t,t);
   drawFacePhase(canvas,FacePhase::Sleeping,0,500000);assert(canvas.eyes==184);

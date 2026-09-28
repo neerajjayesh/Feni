@@ -3,7 +3,7 @@
 An ESP8266 desk companion with a 1.8-inch TFT: a centered animated face, clock,
 Google Calendar reminders, countdown timers, and WLED preset control.
 
-**Current firmware: v3.5.3.** The original working baseline is tagged `v3.1.1`. Designed for a NodeMCU ESP8266 and an ST7735
+**Current firmware: v3.5.4.** The original working baseline is tagged `v3.1.1`. Designed for a NodeMCU ESP8266 and an ST7735
 128 x 160 SPI display, used in landscape at 160 x 128.
 
 ## Components
@@ -48,7 +48,7 @@ variants may need changes in [Hardware.h](FeniBuddy/Hardware.h).
 ## Features
 
 - RoboEyes animations and Buddy / Clock / Auto display modes. Eyes lift for the gaming and popcorn overlays, then return to center.
-- Startup and wake animations; sleep after five minutes without interaction.
+- Startup and wake animations; sleep after five minutes without interaction or a foreground PC activity.
 - [Feni Studio for Windows](docs/STUDIO.md): edit C++ animation code per behaviour, build and flash over USB, and configure foreground/background app rules.
 - Startup, PC connection, sleep, wake, gaming, coding, idle, Entertainment and seven custom behaviours, compiled into Feni.
 - In Auto, a double tap shows the clock for ten seconds. The clock remains white.

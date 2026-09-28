@@ -97,7 +97,8 @@ template<class Canvas> inline void drawPopcorn(Canvas &g, uint32_t t, uint32_t d
 
   const int cx = 80;
   const int oy = (int)((1.0f - e) * 50);
-  const int topY = 90 + oy, botY = 124 + oy;
+  // Let the lower half of the bucket sit below the display edge.
+  const int topY = 109 + oy, botY = 143 + oy;
 
   // popcorn puffs (back row first, then front row)
   static const int8_t puffX[9] = {-14, -5, 4, 13, -19, -10, -1, 8, 17};

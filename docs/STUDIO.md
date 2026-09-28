@@ -1,7 +1,7 @@
 # Feni Studio
 
 Studio manages **C++ animation code**, USB builds and application reactions for
-Feni v3.5.3. It runs on Windows 10/11 with .NET Framework 4.7.2 or newer. There is
+Feni v3.5.4. It runs on Windows 10/11 with .NET Framework 4.7.2 or newer. There is
 no video/frame library, PNG packer or animation-file upload workflow.
 
 ## Install
@@ -82,8 +82,8 @@ active. Both use an upper eye position with a 12-pixel top margin, returning to 
 behaviour changes. The PC connection animation retains priority.
 
 The adapted source is [FeniAnimations-pop-game.h](../FeniBuddy/FeniAnimations-pop-game.h).
-Its drawing geometry is unchanged; canvas parameters were made templates for
-firmware and host-test compatibility. RoboEyes supplies the blinking eyes.
+The popcorn bucket is lowered so roughly its upper half remains visible. Canvas
+parameters are templates for firmware and host tests. RoboEyes supplies the eyes.
 
 ## Application rules
 
@@ -92,17 +92,28 @@ and assign Gaming, Coding, Idle, Entertainment or Custom 2–8. The first enabled 
 wins; Move up/down changes priority. Names may be comma-separated. Choose app
 `.exe` and Running apps help fill them. Save rules when done.
 
-The default VLC rule selects Entertainment for `vlc.exe`. The YouTube rule
-requires both a supported browser process and `YouTube` in its foreground window
-title. It follows the active browser window/tab, not background playback, and is
-a title match rather than URL inspection. Other browsers/apps can be added.
+Entertainment defaults include VLC and browser-title matches for Prime Video,
+Hotstar, NetMirror / net77.cc and Cineby / cineby.rocks. YouTube is excluded.
+Browser rules require both the browser executable and the service name/domain
+in the foreground window title; they do not inspect URLs or background tabs.
+A player that omits the service from its title needs an additional title rule.
+Coding includes Antigravity and the Codex desktop process (`ChatGPT.exe`), plus
+`Codex.exe` and existing editors. Gaming includes `cs2.exe` (Steam game 730).
+Existing installations preserve saved rules; edit App rules to adopt these defaults.
 **Title contains (optional)** is case-insensitive and applies only to Foreground
 rules. Leave it blank for ordinary executable matching.
 
 Foreground follows the app being used. Running also matches background processes,
 so a launcher left open can keep a reaction active. Add individual game executable
 names if needed. No match selects Idle buddy. Only the resulting behaviour number
-is sent to Feni; the process list and window contents stay on the PC.
+and foreground flag are sent to Feni; process names and window titles stay local.
+
+A matched foreground activity wakes a sleeping Feni with its wake animation and
+prevents sleep while active. Neutral or background-only matches do not keep it
+awake. When activity ends, or its heartbeat expires after 45 seconds, a fresh
+five-minute sleep countdown begins. The one-minute menu return still applies.
+Studio must keep running in the tray even when animations are hardcoded: it
+provides Windows foreground detection and local device messages.
 
 ## Files and verification
 

@@ -13,10 +13,11 @@ char wledVerifyIp[16]={},wledVerifyName[21]={};
 String asJson(JsonDocument &doc) {String output;serializeJson(doc,output);return output;}
 String statusJson() {
   DynamicJsonDocument doc(4096);
-  doc["name"]="Feni";doc["firmware"]="feni-buddy-3.5.3";
+  doc["name"]="Feni";doc["firmware"]="feni-buddy-3.5.4";
   doc["sleeping"]=ui.sleeping();doc["facePhase"]=int(ui.facePhase);doc["sleepAfterSeconds"]=buddy::Ui::SleepTimeout/1000;
   doc["pcConnected"]=pc.connected;doc["pcActivity"]=int(pc.activity);doc["pcIntro"]=pc.introPlaying;
   doc["pcAnimation"]=pc.customSlot;doc["animationSlot"]=activeCodeSlot;
+  doc["pcForeground"]=pc.keepsAwake(millis());
   doc["wifi"]=ui.online;doc["setup"]=apActive;doc["ip"]=WiFi.localIP().toString();doc["networkMessage"]=networkMessage;
   doc["ssid"]=settings.ssid;doc["mode"]=int(ui.mode);doc["page"]=int(ui.page);doc["choice"]=ui.choice;doc["menu"]=ui.menu;
   doc["theme"]=ui.theme;doc["meetingActive"]=ui.meetingActive;doc["meetingVisible"]=ui.showMeeting();doc["meetingSeconds"]=meetingIndex>=0 ? events[meetingIndex].end-epochNow() : 0;
@@ -210,7 +211,9 @@ void startNetwork() {
     uint32_t activity;
     if(!numberArg("activity",activity)||activity>3) {server.send(400,"text/plain","Invalid activity");return;}
     if(activity==3){uint32_t slot;if(!numberArg("animation",slot)||slot<7||slot>=CodeSlots){server.send(400,"text/plain","Invalid custom animation");return;}pc.customSlot=slot;}
-    pc.receive(static_cast<buddy::PcActivity>(activity),millis());server.send(200,"text/plain","OK");
+    uint32_t foreground=1;
+    if(server.hasArg("foreground") && (!numberArg("foreground",foreground)||foreground>1)){server.send(400,"text/plain","Invalid foreground flag");return;}
+    pc.receive(static_cast<buddy::PcActivity>(activity),millis(),foreground==1);server.send(200,"text/plain","OK");
   });
   server.on("/wifi",HTTP_POST,receiveWifi);server.on("/settings",HTTP_POST,receiveSettings);
   server.on("/wifi/forget",HTTP_POST,[](){

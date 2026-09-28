@@ -40,9 +40,11 @@ Feni drops PC activity after 45 seconds without a message. Calendar HTTPS sync
 can briefly delay delivery. Connection animations wait for an awake buddy
 screen and expire if hidden for over 30 seconds.
 
-PC messages never reset inactivity or sleep. Decorations do not cover menus,
-clocks or alerts and do not wake a sleeping buddy. The latest activity appears
-after its wake animation.
+On firmware 3.5.4 and later, non-neutral foreground activities wake Feni and
+prevent sleep. Neutral messages do not. After activity ends or expires, Feni
+starts a fresh five-minute sleep countdown. Menus, clocks and alerts retain
+priority. Use Studio for entertainment and custom rules; this legacy companion
+sends foreground-only gaming/coding categories.
 
 ## Connection and privacy
 

@@ -1,5 +1,14 @@
 # Changelog
 
+## 3.5.4
+
+- Wake for foreground gaming, coding, entertainment and custom PC activities;
+  prevent sleep until activity ends or expires, then restart the sleep countdown.
+- Keep neutral/background heartbeats passive and preserve the menu idle timeout.
+- Lower the popcorn bucket with its lower half below the display edge.
+- Add CS2, Antigravity, Codex and streaming-service defaults; remove YouTube.
+- Retain Studio as the tray companion for foreground detection and app rules.
+
 ## 3.5.3
 
 - Add the supplied 4.2-second PC-connected animation: lightning cut-outs in the

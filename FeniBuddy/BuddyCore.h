@@ -64,6 +64,7 @@ struct Ui {
   uint32_t startupDuration=StartupDuration,wakeDuration=WakeDuration;
   bool wakeFace = false, animationPending = false;
   bool idleBuddy = false;
+  bool pcWasActive = false;
   uint32_t activityAt = 0, idleEnteredAt = 0;
   uint16_t customMinutes = 25;
   uint8_t customField = 0;
@@ -80,7 +81,12 @@ struct Ui {
   void startFaceFrame(uint32_t now) { if(animating() && animationPending) {facePhaseAt=now;animationPending=false;} }
   // A newly starting meeting gets one viewing window even if Feni was already idle.
   void wakeForMeeting(uint32_t now) { if(page==Page::Home && mode!=Mode::Clock) {facePhase=FacePhase::Awake;wakeFace=false;noteActivity(now);} }
-  void update(uint32_t now) {
+  void update(uint32_t now,bool pcActive=false) {
+    if(pcActive && sleeping())wake(now);
+    // Begin a fresh sleep countdown when foreground activity ends or expires.
+    // Heartbeats do not postpone the one-minute menu return.
+    if(pcWasActive && !pcActive)activityAt=now;
+    pcWasActive=pcActive;
     if(animating() && !animationPending && uint32_t(now-facePhaseAt)>=(facePhase==FacePhase::Startup?startupDuration:wakeDuration)) facePhase=FacePhase::Awake;
     if(!idleBuddy && uint32_t(now-activityAt)>=IdleTimeout) {
       page=Page::Home;choice=0;peek=false;idleBuddy=true;idleEnteredAt=now;
@@ -92,7 +98,7 @@ struct Ui {
       if(sleeping()) {facePhase=FacePhase::Awake;wakeFace=true;activityAt=now;}
     }
     if (timerDone && now - doneAt >= 15000) timerDone = false;
-    if(page==Page::Home && idleBuddy && !timerDone && !reminder && !animating() && uint32_t(now-activityAt)>=SleepTimeout)
+    if(!pcActive && page==Page::Home && idleBuddy && !timerDone && !reminder && !animating() && uint32_t(now-activityAt)>=SleepTimeout)
       facePhase=FacePhase::Sleeping;
     if (page == Page::WifiPassword && now - passwordAt >= 15000) { page = Page::Wifi; choice = 1; }
   }

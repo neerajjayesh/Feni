@@ -24,11 +24,13 @@ namespace FeniStudio {
         public string FirmwareFolder=Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"firmware","FeniBuddy");
         public string Port="COM8";
         public List<AppRule> Rules=new List<AppRule> {
-            new AppRule {Name="Coding",Applications="Code, Code - Insiders, devenv, idea64, pycharm64",Slot=5},
-            new AppRule {Name="Gaming",Applications="steam, steamwebhelper, EpicGamesLauncher, Battle.net, Playnite.DesktopApp",Slot=4},
+            new AppRule {Name="Coding",Applications="Code, Code - Insiders, devenv, idea64, pycharm64, Antigravity, ChatGPT, Codex",Slot=5},
+            new AppRule {Name="Gaming",Applications="steam, steamwebhelper, EpicGamesLauncher, Battle.net, Playnite.DesktopApp, cs2",Slot=4},
             new AppRule {Name="VLC",Applications="vlc",Slot=7},
-            new AppRule {Name="YouTube",Applications="chrome, msedge, firefox, brave, opera, opera_gx, vivaldi",TitleContains="YouTube",Slot=7}
+            BrowserRule("Prime Video"), BrowserRule("PrimeVideo"), BrowserRule("Hotstar"),
+            BrowserRule("NetMirror"), BrowserRule("net77.cc"), BrowserRule("Cineby"), BrowserRule("cineby.rocks")
         };
+        static AppRule BrowserRule(string title){return new AppRule {Name=title,Applications="chrome, msedge, firefox, brave, opera, opera_gx, vivaldi",TitleContains=title,Slot=7};}
         public bool RunRules=true;
         public static readonly string DirectoryPath=Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"FeniStudio");
         public static readonly string ConfigPath=Path.Combine(DirectoryPath,"config.json");
@@ -55,13 +57,17 @@ namespace FeniStudio {
         public static readonly string[] Names={"Startup","PC connected","Sleeping","Wake from sleep","Gaming","Coding","Idle buddy","Entertainment","Custom 2","Custom 3","Custom 4","Custom 5","Custom 6","Custom 7","Custom 8"};
         public static bool Event(int slot) {return slot==0||slot==1||slot==3;}
         public static int Choose(IEnumerable<AppRule> rules,string foreground,IEnumerable<string> running,string title="") {
+            bool foregroundActivity;return Choose(rules,foreground,running,title,out foregroundActivity);
+        }
+        public static int Choose(IEnumerable<AppRule> rules,string foreground,IEnumerable<string> running,string title,out bool foregroundActivity) {
+            foregroundActivity=false;
             var names=new HashSet<string>(running.Select(Normalize),StringComparer.OrdinalIgnoreCase);
             foreach(var r in rules) {
                 if(!r.Enabled||r.Slot<4||r.Slot>14)continue;
                 if(!String.IsNullOrWhiteSpace(r.TitleContains) && (r.Trigger!="Foreground" || (title??"").IndexOf(r.TitleContains.Trim(),StringComparison.OrdinalIgnoreCase)<0))continue;
                 foreach(string name in (r.Applications??"").Split(new[]{',',';'},StringSplitOptions.RemoveEmptyEntries)) {
                     string n=Normalize(name);if(n.Length==0)continue;
-                    if(r.Trigger=="Running"?names.Contains(n):n==Normalize(foreground))return r.Slot;
+                    if(r.Trigger=="Running"?names.Contains(n):n==Normalize(foreground)){foregroundActivity=(r.Applications??"").Split(new[]{',',';'},StringSplitOptions.RemoveEmptyEntries).Any(app=>Normalize(app)==Normalize(foreground));return r.Slot;}
                 }
             }
             return 6;

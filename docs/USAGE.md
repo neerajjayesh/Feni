@@ -92,14 +92,16 @@ a button action brings back the offline controls or setup information.
 ## Startup, sleep and wake
 
 Startup gradually opens the centered square eyes with a short progress line.
-After five minutes without button or web-control activity, Feni closes its eyes
-and sleeps. The earlier one-minute return to the buddy face still applies.
+After five minutes without button/web interaction or foreground PC activity,
+Feni closes its eyes and sleeps. The earlier one-minute return to the buddy face still applies.
 A single FLASH press plays a 1.4-second wake animation and leaves the face
 visible, including in Auto and Clock modes. The first gesture only wakes;
 double tap afterward opens the clock and hold opens the menu.
 
 Timers continue while sleeping. Their completion alert still appears; new
 meeting notifications remain available. A newly active meeting wakes the
-Buddy/Auto home screen. Background PC messages do not postpone sleep.
+Buddy/Auto home screen. Matched foreground PC activities play the wake animation
+and prevent sleep. Neutral/background-only PC messages do not postpone sleep.
+After activity ends or the PC heartbeat expires, the five-minute countdown restarts.
 
 See [PC companion setup](PC.md) for gaming, coding and connection animations.
