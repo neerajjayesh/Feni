@@ -1,7 +1,7 @@
 # Feni Studio
 
 Studio manages **C++ animation code**, USB builds and application reactions for
-Feni v3.6.2. It runs on Windows 10/11 with .NET Framework 4.7.2 or newer. There is
+Feni v3.6.3. It runs on Windows 10/11 with .NET Framework 4.7.2 or newer. There is
 no video/frame library, PNG packer or animation-file upload workflow.
 
 ## Install
@@ -117,13 +117,15 @@ provides Windows foreground detection and local device messages.
 
 ## AI status scenes
 
-AI replaces Coding in slot 5. The supplied pixel-logo animation has three scenes:
-normal prompting (typing at a keyboard), thinking (small logo and three bouncing
-dots), and needs input (typing scene with waving arms and an exclamation mark).
+AI replaces Coding in slot 5. The supplied pixel-logo animation has four scenes:
+normal prompting (creature only), thinking (small logo and three bouncing
+dots), needs input (typing scene with waving arms and an exclamation mark),
+and limit exhausted (slumped creature with X eyes and pulsing R.I.P. text).
 The normal scene is rendered at 75% size in a centered 120x96 area, leaving
 20-pixel side margins and 16-pixel top/bottom margins. Thinking and attention
 retain their original size. Within the normal scene, the creature is now 72x45
-pixels, centered above the existing typing animation. The logo is always RGB #DE7B58, independent of the selected accent. Dots, alert,
+pixels, with the typing lines and cursor removed from the normal scene. The
+limit scene is half-size in a centered 80x64 area. The logo is always RGB #DE7B58, independent of the selected accent. Dots, alert,
 code lines and bubble use the accent and its darker shade. The white clock is
 unchanged. Blank AI replacement code selects these built-in scenes.
 
@@ -131,12 +133,19 @@ Studio checks the foreground window every two seconds. For AI it inspects
 visible, enabled accessibility button labels locally. Stop controls indicate
 thinking; recognised approval or question controls indicate needs input and
 take priority. Otherwise the normal prompting scene is used. This reads no edit
-values and sends no button labels, prompts or conversation text to Feni.
+values and sends no button labels, warning text, prompts or conversation text
+to Feni. Limit detection additionally reads short notices inside accessible
+alert/status/dialog regions, matching explicit usage/message/session/quota
+exhaustion wording. A matching notice takes priority and clears when the warning
+disappears. It does not scan the conversation history or infer a limit from
+Upgrade buttons, network errors or a full context window. If an app does not
+expose its warning in those regions, select Limit exhausted in the tray menu.
+No account usage API is polled, and no credits or resets are consumed.
 
 Detection depends on the app exposing supported English accessibility labels.
 Other languages, inaccessible controls or changed app versions may fall back to
 prompting. Right-click the Studio tray icon, then **AI state > Automatic /
-Prompting / Thinking / Needs input** to override it while an AI app is foreground.
+Prompting / Thinking / Needs input / Limit exhausted** to override it while an AI app is foreground.
 The override lasts until changed or Studio exits; it does not force AI over other
 foreground activities. The Device tab shows the chosen state and detection mode.
 
@@ -145,7 +154,7 @@ classification is unit-tested; live approval/working requests in Antigravity
 were not submitted during verification.
 
 For other integrations, authenticated POST `/pc` accepts `activity=2` for AI,
-`foreground=1` and `aiState=0` (prompting), `1` (thinking) or `2` (needs input).
+`foreground=1` and `aiState=0` (prompting), `1` (thinking), `2` (needs input), or `3` (limit exhausted).
 Omitting aiState resets it to prompting; unsupported values return HTTP 400.
 Foreground AI retains the same wake/sleep behaviour as the other PC activities.
 

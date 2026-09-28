@@ -1,5 +1,21 @@
 # Build and verification
 
+## AI limit state / v3.6.3
+
+The drawing suite now traverses all four scenes. Studio tests cover explicit
+exhaustion messages, priority over working/approval controls, warning removal,
+and negative cases such as upgrades, network errors and context-window notices.
+Live Codex foreground inspection still reports Thinking correctly. A real
+account limit was not exhausted for testing; detection requires the app to
+expose a supported English warning in an accessible notice region.
+
+Before the final size/typing adjustments, live ESP8266 checks injected aiState=3
+and verified X eyes, the fixed orange logo
+in Cyan/Purple, return to the smaller normal scene, invalid-state rejection and
+the white clock. Saved preferences were restored and Calendar synced.
+The final half-size limit scene and creature-only normal scene pass host drawing
+checks; their final USB upload requires the device to be reconnected.
+
 ## AI scenes / v3.6.0
 
 All firmware suites and Studio self-tests pass. New drawing tests cover complete

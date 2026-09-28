@@ -13,7 +13,7 @@ char wledVerifyIp[16]={},wledVerifyName[21]={};
 String asJson(JsonDocument &doc) {String output;serializeJson(doc,output);return output;}
 String statusJson() {
   DynamicJsonDocument doc(4096);
-  doc["name"]="Feni";doc["firmware"]="feni-buddy-3.6.2";
+  doc["name"]="Feni";doc["firmware"]="feni-buddy-3.6.3";
   doc["sleeping"]=ui.sleeping();doc["facePhase"]=int(ui.facePhase);doc["sleepAfterSeconds"]=buddy::Ui::SleepTimeout/1000;
   doc["pcConnected"]=pc.connected;doc["pcActivity"]=int(pc.activity);doc["pcIntro"]=pc.introPlaying;
   doc["pcAnimation"]=pc.customSlot;doc["animationSlot"]=activeCodeSlot;
@@ -215,7 +215,7 @@ void startNetwork() {
     uint32_t foreground=1;
     if(server.hasArg("foreground") && (!numberArg("foreground",foreground)||foreground>1)){server.send(400,"text/plain","Invalid foreground flag");return;}
     uint32_t aiState=0;
-    if(server.hasArg("aiState") && (!numberArg("aiState",aiState)||aiState>2)){server.send(400,"text/plain","Invalid AI state");return;}
+    if(server.hasArg("aiState") && (!numberArg("aiState",aiState)||aiState>3)){server.send(400,"text/plain","Invalid AI state");return;}
     pc.aiState=activity==2?aiState:0;
     pc.receive(static_cast<buddy::PcActivity>(activity),millis(),foreground==1);server.send(200,"text/plain","OK");
   });

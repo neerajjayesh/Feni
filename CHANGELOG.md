@@ -1,5 +1,13 @@
 # Changelog
 
+## 3.6.3
+
+- Add the supplied limit-exhausted scene with slumped orange creature, X eyes,
+  pulsing R.I.P. lettering and drifting specks, in a centered half-size scene.
+- Remove typing lines and cursor from the normal AI scene.
+- Detect explicit exhaustion notices in accessible alert/status/dialog regions,
+  with a Limit exhausted tray override and authenticated aiState=3 support.
+
 ## 3.6.2
 
 - Reduce the normal AI creature another 25%, centered above the typing scene.

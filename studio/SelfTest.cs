@@ -25,6 +25,10 @@ namespace FeniStudio {
             Check(AiStatus.Classify(new[]{"Submit answers"})==2,"Question state");
             Check(AiStatus.Classify(new[]{"Stop","Send","Skip"})==2,"Codex question panel");
             Check(AiStatus.Classify(new[]{"Stop by the store","Accept cookies"})==0,"No arbitrary text matching");
+            foreach(string notice in new[]{"You've hit your usage limit. Try later.","You have reached your weekly limit","Usage limit reached","Session limit exhausted","You're out of credits","Quota exceeded"})Check(AiStatus.Classify(new[]{"Stop","Allow once"},new[]{notice})==3,"Limit notice: "+notice);
+            foreach(string text in new[]{"Explain why usage limits exist","Usage limit remaining: 80%","Upgrade plan","Network error. Try again","Your context window is full"})Check(!AiStatus.IsLimitNotice(text),"Not a limit warning: "+text);
+            Check(AiStatus.Classify(new[]{"You've hit your usage limit"})==0,"Unscoped button text is not a limit notice");
+            Check(AiStatus.Classify(new[]{"Stop"},new string[0])==1,"Cleared notice resumes thinking");
             Check(Slots.Choose(entertainment,"vlc.exe",new string[0],"Movie")==7,"VLC entertainment");
             Check(Slots.Choose(entertainment,"chrome",new string[0],"Example video - YouTube")==6,"YouTube removed");
             foreach(string title in new[]{"Prime Video","primevideo","JioHotstar","NetMirror","net77.cc","Cineby","cineby.rocks"})Check(Slots.Choose(entertainment,"msedge",new string[0],title)==7,"Streaming title: "+title);

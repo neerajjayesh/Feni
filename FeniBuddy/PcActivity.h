@@ -10,7 +10,7 @@ struct PcState {
   uint32_t seenAt=0, connectedAt=0, introAt=0;
   uint32_t introDuration=IntroDuration;
   uint8_t customSlot=7;
-  uint8_t aiState=0; // 0 prompting/idle, 1 working, 2 needs input
+  uint8_t aiState=0; // 0 prompting/idle, 1 working, 2 needs input, 3 limit exhausted
   bool keepsAwake(uint32_t now) const {return connected && foreground && activity!=PcActivity::Neutral && uint32_t(now-seenAt)<Timeout;}
   void receive(PcActivity next,uint32_t now,bool inForeground=true) {
     if(!connected || uint32_t(now-seenAt)>=Timeout) {connectedAt=now;introPending=true;introPlaying=false;}

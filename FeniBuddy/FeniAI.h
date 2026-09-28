@@ -7,7 +7,7 @@
 namespace FeniAI {
 constexpr int CELL=4,GW=40,GH=32;
 uint8_t cur[GH][GW];
-enum : uint8_t { P_BG,P_LOGO,P_ACCENT,P_ALERT,P_CODE_A,P_CODE_B,P_CODE_C,P_DIM };
+enum : uint8_t { P_BG,P_LOGO,P_ACCENT,P_ALERT,P_CODE_A,P_CODE_B,P_CODE_C,P_DIM,P_RIP };
 static inline void px(int x, int y, uint8_t c) {
   if ((unsigned)x < GW && (unsigned)y < GH) cur[y][x] = c;
 }
@@ -38,7 +38,12 @@ void drawLogo(int ox, int oy, float s, int armL, int armR, uint8_t legLift,
   R(14, 4 + armR, 2, 2, P_LOGO);          // right arm
   static const uint8_t legX[4] = {3, 5, 10, 12};
   for (int i = 0; i < 4; i++) R(legX[i], 8, 1, ((legLift >> i) & 1) ? 1 : 2, P_LOGO);
-  if (eyeH > 0) { R(4, eyeTop, 1, eyeH, P_BG); R(11, eyeTop, 1, eyeH, P_BG); }
+  if (eyeH == -1) {
+    for(int ex=3;ex<=10;ex+=7) {
+      R(ex,2,1,1,P_BG);R(ex+2,2,1,1,P_BG);R(ex+1,3,1,1,P_BG);
+      R(ex,4,1,1,P_BG);R(ex+2,4,1,1,P_BG);
+    }
+  } else if (eyeH > 0) { R(4, eyeTop, 1, eyeH, P_BG); R(11, eyeTop, 1, eyeH, P_BG); }
 }
 
 int blinkPhase(uint32_t t) {              // 0 open, 1 half, 2 closed
@@ -89,7 +94,7 @@ void typingStep(uint32_t now) {
 }
 
 // ------------------------------------------------------------------ state
-enum FeniState : uint8_t { ST_CODING, ST_THINKING, ST_ATTENTION };
+enum FeniState : uint8_t { ST_CODING, ST_THINKING, ST_ATTENTION, ST_LIMIT };
 FeniState state = ST_CODING;
 int logoX = 4;
 uint32_t lastMove = 0;
@@ -122,15 +127,16 @@ void sceneCode(uint32_t now, bool attention) {
     int b = blinkPhase(now);
     if (b == 1) { eyeTop = 4; eyeH = 1; } else if (b == 2) eyeH = 0;
   }
-  // Keep the smaller normal creature centered, with its feet above the code.
+  // Keep the smaller normal creature centered.
   drawLogo(attention?logoX:8, attention?2:7, attention?2.0f:1.5f, armL, armR, legLift, eyeTop, eyeH);
 
-  // code lines (typing pauses while Claude is waiting for you)
-  if (!attention) typingStep(now);
-  drawLine(cl[0], 24, 255);
-  drawLine(cl[1], 27, 255);
-  drawLine(cl[2], 30, typed);
-  if ((now / 350) & 1) rectC(4 + cl[2].indent + typed, 30, 2, 2, P_ACCENT);   // cursor
+  // The normal AI scene is creature-only; keep code details for attention.
+  if (attention) {
+    drawLine(cl[0], 24, 255);
+    drawLine(cl[1], 27, 255);
+    drawLine(cl[2], 30, typed);
+    if ((now / 350) & 1) rectC(4 + cl[2].indent + typed, 30, 2, 2, P_ACCENT);
+  }
 
   if (attention) {                        // hopping "!"
     int ey = 8 - (((now / 180) & 1) ? 0 : 1);
@@ -161,15 +167,53 @@ void sceneThinking(uint32_t now) {
 }
 
 
+// 3x5 pixel "R.I.P." at cell scale sc, top-left (x, y)
+void drawRip(int x, int y, int sc, uint8_t col) {
+  static const uint8_t gR[5] = {0b110, 0b101, 0b110, 0b101, 0b101};
+  static const uint8_t gI[5] = {0b111, 0b010, 0b010, 0b010, 0b111};
+  static const uint8_t gP[5] = {0b110, 0b101, 0b110, 0b100, 0b100};
+  auto glyph = [&](const uint8_t *g) {
+    for (int r = 0; r < 5; r++)
+      for (int c = 0; c < 3; c++)
+        if (g[r] & (4 >> c)) rectC(x + c * sc, y + r * sc, sc, sc, col);
+    x += 4 * sc;
+  };
+  auto dot = [&]() { rectC(x, y + 4 * sc, sc, sc, col); x += 2 * sc; };
+  glyph(gR); dot(); glyph(gI); dot(); glyph(gP); dot();
+}
+
+void sceneLimit(uint32_t now) {
+  // R.I.P. text: slow pulse between red and dim
+  bool bright = sinf(now * 0.003f) > -0.3f;
+  drawRip(3, 0, 2, bright ? P_RIP : P_DIM);
+
+  // slumped logo: arms drooping, legs short; tiny twitches now and then
+  int armL = ((now % 4300) < 140) ? 1 : 2;
+  int armR = 2;
+  uint8_t legLift = ((now % 2900) < 130) ? 0b0000 : 0b1111;
+  drawLogo(4, 12, 2, armL, armR, legLift, 0, -1);      // eyeH = -1 -> X eyes
+
+  // ground line
+  for (int x = 3; x <= 36; x++) px(x, 30, P_DIM);
+
+  // faint specks drifting up on both sides
+  static const uint8_t sx[3] = {1, 38, 2};
+  for (int i = 0; i < 3; i++) {
+    int ph = (now / 260 + i * 5) % 14;
+    if (ph < 11) px(sx[i], 26 - ph, P_DIM);
+  }
+}
+
+
 template<class Canvas> void draw(Canvas &canvas,uint8_t status,uint32_t now) {
   static bool initialized=false;
   if(!initialized){for(int i=0;i<3;i++)makeLine(cl[i]);initialized=true;}
-  feniSetState(status==1?ST_THINKING:status==2?ST_ATTENTION:ST_CODING);
+  feniSetState(status==1?ST_THINKING:status==2?ST_ATTENTION:status==3?ST_LIMIT:ST_CODING);
   memset(cur,0,sizeof(cur));
-  if(state==ST_THINKING)sceneThinking(now);else sceneCode(now,state==ST_ATTENTION);
-  static const uint8_t colours[]={0,1,2,2,2,3,2,3};
+  if(state==ST_LIMIT)sceneLimit(now);else if(state==ST_THINKING)sceneThinking(now);else sceneCode(now,state==ST_ATTENTION);
+  static const uint8_t colours[]={0,1,2,2,2,3,2,3,2};
   // The normal prompting scene uses a centered 120x96 viewport.
-  const int cell=state==ST_CODING?3:CELL;
+  const int cell=state==ST_LIMIT?2:state==ST_CODING?3:CELL;
   const int left=(160-GW*cell)/2,top=(128-GH*cell)/2;
   for(int y=0;y<GH;y++)for(int x=0;x<GW;) {
     uint8_t colour=colours[cur[y][x]];int end=x+1;

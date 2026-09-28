@@ -9,10 +9,11 @@ struct Canvas {
   }
 };
 int main(){
-  for(int state=0;state<3;state++)for(unsigned t=0;t<12000;t+=40){
+  for(int state=0;state<4;state++)for(unsigned t=0;t<12000;t+=40){
     Canvas c;FeniAI::draw(c,state,t);assert(c.pixels[1]>0);
-    assert(c.pixels[0]+c.pixels[1]+c.pixels[2]+c.pixels[3]==(state==0?120*96:160*128));
+    assert(c.pixels[0]+c.pixels[1]+c.pixels[2]+c.pixels[3]==(state==0?120*96:state==3?80*64:160*128));
     if(state==1||state==2)assert(c.pixels[2]>0);
+    if(state==0)assert(c.pixels[2]==0&&c.pixels[3]==0); // No typing lines/cursor.
   }
   Canvas thinking;FeniAI::draw(thinking,1,13000);
   Canvas attention;FeniAI::draw(attention,2,13001);
