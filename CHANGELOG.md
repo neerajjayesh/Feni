@@ -1,5 +1,13 @@
 # Changelog
 
+## 3.6.0
+
+- Replace Coding with AI for Antigravity and Codex; retain wire category 2 and slot 5.
+- Integrate the supplied prompting, thinking and attention scenes, locking the
+  logo to orange while other details follow the accent theme.
+- Add foreground accessibility-based status detection and a manual tray override.
+- Validate AI state messages and preserve foreground wake, menu and clock priority.
+
 ## 3.5.4
 
 - Wake for foreground gaming, coding, entertainment and custom PC activities;

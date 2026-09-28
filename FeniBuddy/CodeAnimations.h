@@ -1,6 +1,7 @@
 #pragma once
 #include "FaceMotion.h"
 #include "CustomAnimations.h"
+#include "FeniAI.h"
 constexpr uint8_t CodeSlots=15;
 int activeCodeSlot=-1,previewCodeSlot=-1;
 uint32_t codeStartedAt=0,previewCodeUntil=0;
@@ -21,10 +22,11 @@ bool drawCodeAnimation(uint32_t now){
   int slot=desiredCodeSlot(now);
   if(slot!=activeCodeSlot){activeCodeSlot=slot;codeStartedAt=now;}
   bool preview=previewCodeSlot==slot && int32_t(previewCodeUntil-now)>0;
-  if(!hasUserAnimation(slot)&&!preview)return false;
+  if(!hasUserAnimation(slot)&&!preview&&slot!=5)return false;
   canvas.clearDisplay();uint32_t elapsed=now-codeStartedAt;
   if(preview && userAnimationDuration(slot))elapsed%=userAnimationDuration(slot);
   if(drawUserAnimation(canvas,slot,elapsed,now)){canvas.display();return true;}
+  if(slot==5){canvas.ink=buddy::rgb565(0xde7b58);FeniAI::draw(canvas,pc.aiState,now);canvas.display();return true;}
   if(!preview)return false;
   // Preview existing coded behaviours without changing the saved mode or activity.
   if(slot==0||slot==2||slot==3)buddy::drawFacePhase(canvas,slot==0?buddy::FacePhase::Startup:slot==2?buddy::FacePhase::Sleeping:buddy::FacePhase::Waking,elapsed,now);

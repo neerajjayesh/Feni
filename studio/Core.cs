@@ -24,7 +24,7 @@ namespace FeniStudio {
         public string FirmwareFolder=Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"firmware","FeniBuddy");
         public string Port="COM8";
         public List<AppRule> Rules=new List<AppRule> {
-            new AppRule {Name="Coding",Applications="Code, Code - Insiders, devenv, idea64, pycharm64, Antigravity, ChatGPT, Codex",Slot=5},
+            new AppRule {Name="AI",Applications="Antigravity, ChatGPT, Codex",Slot=5},
             new AppRule {Name="Gaming",Applications="steam, steamwebhelper, EpicGamesLauncher, Battle.net, Playnite.DesktopApp, cs2",Slot=4},
             new AppRule {Name="VLC",Applications="vlc",Slot=7},
             BrowserRule("Prime Video"), BrowserRule("PrimeVideo"), BrowserRule("Hotstar"),
@@ -54,7 +54,7 @@ namespace FeniStudio {
         }
     }
     public static class Slots {
-        public static readonly string[] Names={"Startup","PC connected","Sleeping","Wake from sleep","Gaming","Coding","Idle buddy","Entertainment","Custom 2","Custom 3","Custom 4","Custom 5","Custom 6","Custom 7","Custom 8"};
+        public static readonly string[] Names={"Startup","PC connected","Sleeping","Wake from sleep","Gaming","AI","Idle buddy","Entertainment","Custom 2","Custom 3","Custom 4","Custom 5","Custom 6","Custom 7","Custom 8"};
         public static bool Event(int slot) {return slot==0||slot==1||slot==3;}
         public static int Choose(IEnumerable<AppRule> rules,string foreground,IEnumerable<string> running,string title="") {
             bool foregroundActivity;return Choose(rules,foreground,running,title,out foregroundActivity);
@@ -93,11 +93,11 @@ namespace FeniStudio {
         }
         public void Dispose(){http.Dispose();}
     }
-    class ForegroundInfo {public string Name="",Title="";}
+    class ForegroundInfo {public string Name="",Title="";public IntPtr Handle;}
     static class Foreground {
         [DllImport("user32.dll")]static extern IntPtr GetForegroundWindow();
         [DllImport("user32.dll")]static extern uint GetWindowThreadProcessId(IntPtr window,out uint id);
         [DllImport("user32.dll",CharSet=CharSet.Unicode)]static extern int GetWindowText(IntPtr window,System.Text.StringBuilder text,int count);
-        public static ForegroundInfo Read(){try{IntPtr window=GetForegroundWindow();uint id;GetWindowThreadProcessId(window,out id);var text=new System.Text.StringBuilder(1024);GetWindowText(window,text,text.Capacity);using(var p=System.Diagnostics.Process.GetProcessById((int)id))return new ForegroundInfo {Name=p.ProcessName,Title=text.ToString()};}catch{return new ForegroundInfo();}}
+        public static ForegroundInfo Read(){try{IntPtr window=GetForegroundWindow();uint id;GetWindowThreadProcessId(window,out id);var text=new System.Text.StringBuilder(1024);GetWindowText(window,text,text.Capacity);using(var p=System.Diagnostics.Process.GetProcessById((int)id))return new ForegroundInfo {Name=p.ProcessName,Title=text.ToString(),Handle=window};}catch{return new ForegroundInfo();}}
     }
 }

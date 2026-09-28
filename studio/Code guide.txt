@@ -32,7 +32,7 @@ canvas.center(y,"text",size,colour), canvas.small(x,y,"text",colour).
 Keep the eyes centered at the existing positions.
 
 Startup, PC connected and wake have an event duration of 100-10000 milliseconds.
-Sleeping, gaming, coding, idle and custom behaviours run while that state is
+Sleeping, gaming, AI, idle and custom behaviours run while that state is
 active. Use elapsed % period for repeating motion. Static locals persist across
 visits; prefer elapsed for restarting animation timing. Menus, the white clock,
 timer alarms and Calendar alerts retain priority. Preview lasts up to 12 seconds;

@@ -1,5 +1,19 @@
 # Build and verification
 
+## AI scenes / v3.6.0
+
+All firmware suites and Studio self-tests pass. New drawing tests cover complete
+scene frames, bounds, logo/accent palette separation, transitions and rollover.
+Classifier tests cover prompting, working, approval/question priority, Codex
+Send/Skip controls, and unrelated button labels. Foreground detection observed
+Codex thinking and Antigravity prompting on the installed apps.
+
+Live firmware captures verify all three scenes in Cyan and Purple, with fixed
+orange logo pixels and changing accent details. Invalid state is rejected. Clock
+remains white and menus retain priority; saved mode/theme were restored and
+Calendar synced. Antigravity execution/approval and actual Codex question panels
+were not triggered; those label mappings remain dependent on app accessibility.
+
 ## Foreground activity / v3.5.4
 
 Host tests cover wake in all three display modes for gaming/coding/custom

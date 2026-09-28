@@ -1,7 +1,7 @@
 # Feni Studio
 
 Studio manages **C++ animation code**, USB builds and application reactions for
-Feni v3.5.4. It runs on Windows 10/11 with .NET Framework 4.7.2 or newer. There is
+Feni v3.6.0. It runs on Windows 10/11 with .NET Framework 4.7.2 or newer. There is
 no video/frame library, PNG packer or animation-file upload workflow.
 
 ## Install
@@ -22,7 +22,7 @@ Old animation files are not deleted; the new firmware does not use them.
 ## Edit a behaviour
 
 1. Select **Animation code**, then Startup, PC connected, Sleeping, Wake from
-   sleep, Gaming, Coding, Idle buddy, Entertainment or Custom 2–8.
+   sleep, Gaming, AI, Idle buddy, Entertainment or Custom 2–8.
 2. Paste your C++ drawing code or **Import code** from a `.cpp`, `.h` or `.txt` file.
 3. **Save code** (Ctrl+S). Switching behaviours also saves your current draft.
 4. Set an event duration for startup, PC connected and wake: 100–10000 ms.
@@ -46,7 +46,7 @@ Adafruit_GFX drawing methods and Feni text helpers are supported. See the
 
 Blank code keeps the existing coded animation. **Use built-in** clears the local
 replacement; flash afterwards to apply it. A `return false;` in your code also
-requests the built-in fallback. Gaming, coding, idle, sleep and custom code run
+requests the built-in fallback. Gaming, AI, idle, sleep and custom code run
 while their behaviour is active; use `elapsed % period` to repeat motion.
 
 **Test installed code** previews the behaviour already compiled into Feni for up
@@ -88,7 +88,7 @@ parameters are templates for firmware and host tests. RoboEyes supplies the eyes
 ## Application rules
 
 Select **App rules** to add executable names, choose **Foreground** or **Running**,
-and assign Gaming, Coding, Idle, Entertainment or Custom 2–8. The first enabled matching rule
+and assign Gaming, AI, Idle, Entertainment or Custom 2–8. The first enabled matching rule
 wins; Move up/down changes priority. Names may be comma-separated. Choose app
 `.exe` and Running apps help fill them. Save rules when done.
 
@@ -97,16 +97,15 @@ Hotstar, NetMirror / net77.cc and Cineby / cineby.rocks. YouTube is excluded.
 Browser rules require both the browser executable and the service name/domain
 in the foreground window title; they do not inspect URLs or background tabs.
 A player that omits the service from its title needs an additional title rule.
-Coding includes Antigravity and the Codex desktop process (`ChatGPT.exe`), plus
-`Codex.exe` and existing editors. Gaming includes `cs2.exe` (Steam game 730).
+AI includes Antigravity and the Codex desktop process (`ChatGPT.exe`), plus
+`Codex.exe`. Ordinary code editors no longer select AI by default. Gaming includes `cs2.exe` (Steam game 730).
 Existing installations preserve saved rules; edit App rules to adopt these defaults.
 **Title contains (optional)** is case-insensitive and applies only to Foreground
 rules. Leave it blank for ordinary executable matching.
 
 Foreground follows the app being used. Running also matches background processes,
 so a launcher left open can keep a reaction active. Add individual game executable
-names if needed. No match selects Idle buddy. Only the resulting behaviour number
-and foreground flag are sent to Feni; process names and window titles stay local.
+names if needed. No match selects Idle buddy. Only the resulting behaviour number, foreground flag and AI state are sent to Feni; process names and window titles stay local.
 
 A matched foreground activity wakes a sleeping Feni with its wake animation and
 prevents sleep while active. Neutral or background-only matches do not keep it
@@ -114,6 +113,37 @@ awake. When activity ends, or its heartbeat expires after 45 seconds, a fresh
 five-minute sleep countdown begins. The one-minute menu return still applies.
 Studio must keep running in the tray even when animations are hardcoded: it
 provides Windows foreground detection and local device messages.
+
+## AI status scenes
+
+AI replaces Coding in slot 5. The supplied pixel-logo animation has three scenes:
+normal prompting (typing at a keyboard), thinking (small logo and three bouncing
+dots), and needs input (typing scene with waving arms and an exclamation mark).
+The logo is always RGB #DE7B58, independent of the selected accent. Dots, alert,
+code lines and bubble use the accent and its darker shade. The white clock is
+unchanged. Blank AI replacement code selects these built-in scenes.
+
+Studio checks the foreground window every two seconds. For AI it inspects
+visible, enabled accessibility button labels locally. Stop controls indicate
+thinking; recognised approval or question controls indicate needs input and
+take priority. Otherwise the normal prompting scene is used. This reads no edit
+values and sends no button labels, prompts or conversation text to Feni.
+
+Detection depends on the app exposing supported English accessibility labels.
+Other languages, inaccessible controls or changed app versions may fall back to
+prompting. Right-click the Studio tray icon, then **AI state > Automatic /
+Prompting / Thinking / Needs input** to override it while an AI app is foreground.
+The override lasts until changed or Studio exits; it does not force AI over other
+foreground activities. The Device tab shows the chosen state and detection mode.
+
+Live checks confirmed Codex working and Antigravity idle. Question and approval
+classification is unit-tested; live approval/working requests in Antigravity
+were not submitted during verification.
+
+For other integrations, authenticated POST `/pc` accepts `activity=2` for AI,
+`foreground=1` and `aiState=0` (prompting), `1` (thinking) or `2` (needs input).
+Omitting aiState resets it to prompting; unsupported values return HTTP 400.
+Foreground AI retains the same wake/sleep behaviour as the other PC activities.
 
 ## Files and verification
 
