@@ -1,7 +1,7 @@
 # Feni Studio
 
 Studio manages **C++ animation code**, USB builds and application reactions for
-Feni v3.5.1. It runs on Windows 10/11 with .NET Framework 4.7.2 or newer. There is
+Feni v3.5.2. It runs on Windows 10/11 with .NET Framework 4.7.2 or newer. There is
 no video/frame library, PNG packer or animation-file upload workflow.
 
 ## Install
@@ -78,7 +78,7 @@ clear that behaviour to built-in and flash again using USB.
 The supplied controller and popcorn animations are built into Gaming and
 Entertainment. Blank replacement code keeps these overlays. Gaming repeats its
 8-second sequence; popcorn repeats its 9-second sequence while the behaviour is
-active. Both use the supplied upper eye position, returning to normal when the
+active. Both use an upper eye position with a 12-pixel top margin, returning to normal when the
 behaviour changes. The PC connection animation retains priority.
 
 The adapted source is [FeniAnimations-pop-game.h](../FeniBuddy/FeniAnimations-pop-game.h).

@@ -32,7 +32,7 @@ int main() {
   assert(blinkSeen && openSeen);
   positionForOverlay(eyes,true);
   for(int i=0;i<50;i++){simulatedNow+=40;eyes.update();}
-  assert(eyes.eyeLx==36&&eyes.eyeRx==90&&eyes.eyeLyNext==0&&eyes.eyeRyNext==0);
+  assert(eyes.eyeLx==36&&eyes.eyeRx==90&&eyes.eyeLyNext==OverlayEyeTop&&eyes.eyeRyNext==OverlayEyeTop);
   positionForOverlay(eyes,false);
   for(int i=0;i<50;i++){simulatedNow+=40;eyes.update();}
   assert(eyes.eyeLyNext==45&&eyes.eyeRyNext==45);

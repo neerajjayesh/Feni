@@ -1,5 +1,10 @@
 # Changelog
 
+## 3.5.2
+
+- Lower gaming and popcorn eyes by 12 pixels from the top-edge position, including
+  Studio previews. Keep ordinary buddy centering and overlay artwork unchanged.
+
 ## 3.5.1
 
 - Add the supplied gaming controller and popcorn-eating overlays, with the
