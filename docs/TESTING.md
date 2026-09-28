@@ -1,5 +1,18 @@
 # Build and verification
 
+## Gaming/popcorn / v3.5.1
+
+Host checks cover overlay drawing across complete cycles, fade envelopes,
+Entertainment routing, unrelated custom-slot isolation and PC-intro priority.
+RoboEyes tests verify the upper target during overlays and restoration to center.
+Studio tests cover VLC, case-insensitive YouTube title matching, ordinary browser
+use, unrelated apps with YouTube in their titles, and background browser isolation.
+Live device checks confirmed both behaviour routes, raised eye targets, return
+to the centered target, the white clock and preservation of Auto/Purple settings.
+Framebuffer captures verified the supplied controller and popcorn artwork.
+Calendar synced after flashing. Actual browser/VLC launches were not automated;
+rule matching and device behaviour delivery were tested separately.
+
 ## Code animations / v3.5.0
 
 Studio self-tests cover migration from the frame-based configuration while

@@ -14,8 +14,9 @@ namespace FeniStudio {
         public string Name { get; set; }
         public string Applications { get; set; }
         public string Trigger { get; set; }
+        public string TitleContains { get; set; }
         public int Slot { get; set; }
-        public AppRule() { Enabled=true;Name="New rule";Applications="";Trigger="Foreground";Slot=7; }
+        public AppRule() { Enabled=true;Name="New rule";Applications="";Trigger="Foreground";TitleContains="";Slot=7; }
     }
     public class StudioConfig {
         public string Url="http://feni.local";
@@ -24,7 +25,9 @@ namespace FeniStudio {
         public string Port="COM8";
         public List<AppRule> Rules=new List<AppRule> {
             new AppRule {Name="Coding",Applications="Code, Code - Insiders, devenv, idea64, pycharm64",Slot=5},
-            new AppRule {Name="Gaming",Applications="steam, steamwebhelper, EpicGamesLauncher, Battle.net, Playnite.DesktopApp",Slot=4}
+            new AppRule {Name="Gaming",Applications="steam, steamwebhelper, EpicGamesLauncher, Battle.net, Playnite.DesktopApp",Slot=4},
+            new AppRule {Name="VLC",Applications="vlc",Slot=7},
+            new AppRule {Name="YouTube",Applications="chrome, msedge, firefox, brave, opera, opera_gx, vivaldi",TitleContains="YouTube",Slot=7}
         };
         public bool RunRules=true;
         public static readonly string DirectoryPath=Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"FeniStudio");
@@ -49,12 +52,13 @@ namespace FeniStudio {
         }
     }
     public static class Slots {
-        public static readonly string[] Names={"Startup","PC connected","Sleeping","Wake from sleep","Gaming","Coding","Idle buddy","Custom 1","Custom 2","Custom 3","Custom 4","Custom 5","Custom 6","Custom 7","Custom 8"};
+        public static readonly string[] Names={"Startup","PC connected","Sleeping","Wake from sleep","Gaming","Coding","Idle buddy","Entertainment","Custom 2","Custom 3","Custom 4","Custom 5","Custom 6","Custom 7","Custom 8"};
         public static bool Event(int slot) {return slot==0||slot==1||slot==3;}
-        public static int Choose(IEnumerable<AppRule> rules,string foreground,IEnumerable<string> running) {
+        public static int Choose(IEnumerable<AppRule> rules,string foreground,IEnumerable<string> running,string title="") {
             var names=new HashSet<string>(running.Select(Normalize),StringComparer.OrdinalIgnoreCase);
             foreach(var r in rules) {
                 if(!r.Enabled||r.Slot<4||r.Slot>14)continue;
+                if(!String.IsNullOrWhiteSpace(r.TitleContains) && (r.Trigger!="Foreground" || (title??"").IndexOf(r.TitleContains.Trim(),StringComparison.OrdinalIgnoreCase)<0))continue;
                 foreach(string name in (r.Applications??"").Split(new[]{',',';'},StringSplitOptions.RemoveEmptyEntries)) {
                     string n=Normalize(name);if(n.Length==0)continue;
                     if(r.Trigger=="Running"?names.Contains(n):n==Normalize(foreground))return r.Slot;
@@ -83,9 +87,11 @@ namespace FeniStudio {
         }
         public void Dispose(){http.Dispose();}
     }
+    class ForegroundInfo {public string Name="",Title="";}
     static class Foreground {
         [DllImport("user32.dll")]static extern IntPtr GetForegroundWindow();
         [DllImport("user32.dll")]static extern uint GetWindowThreadProcessId(IntPtr window,out uint id);
-        public static string Name(){try{uint id;GetWindowThreadProcessId(GetForegroundWindow(),out id);using(var p=System.Diagnostics.Process.GetProcessById((int)id))return p.ProcessName;}catch{return "";}}
+        [DllImport("user32.dll",CharSet=CharSet.Unicode)]static extern int GetWindowText(IntPtr window,System.Text.StringBuilder text,int count);
+        public static ForegroundInfo Read(){try{IntPtr window=GetForegroundWindow();uint id;GetWindowThreadProcessId(window,out id);var text=new System.Text.StringBuilder(1024);GetWindowText(window,text,text.Capacity);using(var p=System.Diagnostics.Process.GetProcessById((int)id))return new ForegroundInfo {Name=p.ProcessName,Title=text.ToString()};}catch{return new ForegroundInfo();}}
     }
 }

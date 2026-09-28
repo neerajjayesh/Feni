@@ -1,6 +1,7 @@
 #pragma once
 #include "BuddyCore.h"
 #include "PcActivity.h"
+#include "FeniAnimations-pop-game.h"
 namespace buddy {
 inline int openingHeight(uint32_t elapsed,uint32_t duration) {
   if(elapsed>=duration) return 38;
@@ -21,14 +22,12 @@ template<class Canvas> void drawFacePhase(Canvas &c,FacePhase phase,uint32_t ela
     c.fillRect(36,99,88,2,3);c.fillRect(36,99,width,2,1);
   }
 }
-template<class Canvas> void drawPcDetails(Canvas &c,const PcState &pc,uint32_t now) {
+template<class Canvas> void drawPcDetails(Canvas &c,const PcState &pc,uint32_t now,uint32_t elapsed=0) {
   if(!pc.connected) return;
   if(pc.activity==PcActivity::Gaming) {
-    // Compact headset around, never replacing or shifting, the square eyes.
-    c.drawFastHLine(41,32,78,3);c.drawLine(29,44,41,32,3);c.drawLine(119,32,131,44,3);
-    c.drawFastVLine(29,44,8,3);c.drawFastVLine(131,44,8,3);
-    c.fillRoundRect(27,52,6,23,2,1);c.fillRoundRect(127,52,6,23,2,1);
-    c.drawFastVLine(130,76,8,1);c.drawFastHLine(119,83,12,1);c.fillRect(116,81,5,4,1);
+    if(!pc.introPlaying)FeniAnim::drawGamer(c,elapsed%8000,8000,1,0);
+  } else if(pc.activity==PcActivity::Custom && pc.customSlot==7) {
+    if(!pc.introPlaying)FeniAnim::drawPopcorn(c,elapsed%9000,9000,1,0);
   } else if(pc.activity==PcActivity::Coding) {
     c.drawLine(24,54,17,63,1);c.drawLine(17,63,24,72,1);
     c.drawLine(136,54,143,63,1);c.drawLine(143,63,136,72,1);

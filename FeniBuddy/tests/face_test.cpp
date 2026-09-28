@@ -30,5 +30,11 @@ int main() {
     if(eyes.eyeLheightCurrent>=37) {openSeen=true;assert(eyes.eyeLy>=45 && eyes.eyeLy<=46);}
   }
   assert(blinkSeen && openSeen);
+  positionForOverlay(eyes,true);
+  for(int i=0;i<50;i++){simulatedNow+=40;eyes.update();}
+  assert(eyes.eyeLx==36&&eyes.eyeRx==90&&eyes.eyeLyNext==0&&eyes.eyeRyNext==0);
+  positionForOverlay(eyes,false);
+  for(int i=0;i<50;i++){simulatedNow+=40;eyes.update();}
+  assert(eyes.eyeLyNext==45&&eyes.eyeRyNext==45);
   puts("PASS: fixed central gaze across 1000 RoboEyes frames, with blinks and expressions");
 }

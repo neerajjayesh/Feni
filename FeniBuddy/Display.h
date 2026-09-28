@@ -64,7 +64,7 @@ void eventCard(const Event &event,bool alert,bool meeting=false) {
 
 bool buddyFaceVisible=false;
 uint32_t buddyFaceAt=0;
-void drawPcOverlay() {buddy::drawPcDetails(canvas,pc,millis());}
+void drawPcOverlay() {uint32_t now=millis();buddy::drawPcDetails(canvas,pc,now,now-codeStartedAt);}
 void renderUi(uint32_t now) {
   static uint32_t lastFrame=0,nextMood=0;
   static bool specialWasVisible=false;
@@ -90,7 +90,10 @@ void renderUi(uint32_t now) {
       eyes.eyeLheightNext=eyes.eyeRheightNext=38;eyes.eyeLy=eyes.eyeRy=45;
     }
     if(!buddyFaceVisible){buddyFaceAt=now;canvas.clearDisplay();eyes.open();eyes.blink();}
-    if(int32_t(now-nextMood)>=0){eyes.setMood(random(4)==0?HAPPY:DEFAULT);nextMood=now+random(7000,15000);}
+    bool raised=pc.connected && !pc.introPlaying && (activeCodeSlot==4||activeCodeSlot==7);
+    positionForOverlay(eyes,raised);
+    if(raised)eyes.setMood(DEFAULT);
+    else if(int32_t(now-nextMood)>=0){eyes.setMood(random(4)==0?HAPPY:DEFAULT);nextMood=now+random(7000,15000);}
     buddyFaceVisible=true;canvas.beforeDisplay=drawPcOverlay;eyes.update();canvas.beforeDisplay=nullptr;frameContainsPassword=false;return;
   }
   activeCodeSlot=-1;buddyFaceVisible=false;canvas.clearDisplay();frameContainsPassword=ui.page==buddy::Page::WifiPassword;

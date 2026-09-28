@@ -16,7 +16,14 @@ namespace FeniStudio {
                 bool rejected=false;try{using(var d=new DeviceClient(url)){} }catch(ArgumentException){rejected=true;}Check(rejected,"Destination guard");
             }
             var json=new System.Web.Script.Serialization.JavaScriptSerializer();
-            var migrated=json.Deserialize<StudioConfig>("{\"Folder\":\"old\",\"Files\":[],\"RunRules\":false}");Check(!migrated.RunRules&&migrated.Rules.Count==2,"Frame config migration");
+            var migrated=json.Deserialize<StudioConfig>("{\"Folder\":\"old\",\"Files\":[],\"RunRules\":false}");Check(!migrated.RunRules&&migrated.Rules.Count==4,"Frame config migration");
+            var entertainment=new StudioConfig().Rules;
+            Check(Slots.Choose(entertainment,"vlc.exe",new string[0],"Movie")==7,"VLC entertainment");
+            Check(Slots.Choose(entertainment,"chrome",new string[0],"Example video - YouTube")==7,"YouTube title match");
+            Check(Slots.Choose(entertainment,"msedge",new string[0],"youtube")==7,"Case insensitive title match");
+            Check(Slots.Choose(entertainment,"chrome",new string[0],"Other website")==6,"Ordinary browser stays neutral");
+            Check(Slots.Choose(entertainment,"notepad",new[]{"chrome"},"YouTube notes")==6,"Title also requires matching application");
+            Check(Slots.Choose(entertainment,"Code",new[]{"chrome"},"Editor")==5,"Background browser cannot override coding");
             var project=new CodeProject();string blank=project.Header();Check(blank.Contains("default:return false;")&&!blank.Contains("bool codeSlot"),"Built-in fallback");string before=project.Revision;
             for(int i=0;i<15;i++)project.Code[i]=CodeProject.Example;
             project.Duration[0]=2300;string header=project.Header();Check(header.Contains("case 0:return 2300;")&&header.Contains("case 14:return codeSlot14"),"All slots and durations");Check(project.Revision!=before,"Revision changes with code");

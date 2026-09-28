@@ -14,3 +14,7 @@ void configureCenteredFace(Eyes &value) {
   value.eyeRx=value.eyeRxNext=value.eyeLxNext+54;
   value.eyeRyNext=value.eyeLyNext;
 }
+// Supplied controller/popcorn overlays reserve the lower half of the screen.
+template<typename Eyes> void positionForOverlay(Eyes &value,bool raised) {
+  value.setPosition(raised ? 1 : 0); // RoboEyes N / DEFAULT; horizontal center stays fixed.
+}

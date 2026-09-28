@@ -30,9 +30,10 @@ bool drawCodeAnimation(uint32_t now){
   if(slot==0||slot==2||slot==3)buddy::drawFacePhase(canvas,slot==0?buddy::FacePhase::Startup:slot==2?buddy::FacePhase::Sleeping:buddy::FacePhase::Waking,elapsed,now);
   else {
     int height=(elapsed%4000<150)?4:38;
-    canvas.fillRoundRect(36,64-height/2,34,height,6,1);canvas.fillRoundRect(90,64-height/2,34,height,6,1);
-    buddy::PcState demo;demo.connected=true;demo.activity=slot==4?buddy::PcActivity::Gaming:slot==5?buddy::PcActivity::Coding:buddy::PcActivity::Neutral;
-    demo.introPlaying=slot==1;demo.introAt=codeStartedAt;buddy::drawPcDetails(canvas,demo,now);
+    int centerY=(slot==4||slot==7)?19:64;
+    canvas.fillRoundRect(36,centerY-height/2,34,height,6,1);canvas.fillRoundRect(90,centerY-height/2,34,height,6,1);
+    buddy::PcState demo;demo.connected=true;demo.activity=slot==4?buddy::PcActivity::Gaming:slot==5?buddy::PcActivity::Coding:slot==7?buddy::PcActivity::Custom:buddy::PcActivity::Neutral;
+    demo.introPlaying=slot==1;demo.introAt=codeStartedAt;buddy::drawPcDetails(canvas,demo,now,elapsed);
   }
   canvas.display();return true;
 }

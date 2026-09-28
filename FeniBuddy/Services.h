@@ -13,7 +13,7 @@ char wledVerifyIp[16]={},wledVerifyName[21]={};
 String asJson(JsonDocument &doc) {String output;serializeJson(doc,output);return output;}
 String statusJson() {
   DynamicJsonDocument doc(4096);
-  doc["name"]="Feni";doc["firmware"]="feni-buddy-3.5.0";
+  doc["name"]="Feni";doc["firmware"]="feni-buddy-3.5.1";
   doc["sleeping"]=ui.sleeping();doc["facePhase"]=int(ui.facePhase);doc["sleepAfterSeconds"]=buddy::Ui::SleepTimeout/1000;
   doc["pcConnected"]=pc.connected;doc["pcActivity"]=int(pc.activity);doc["pcIntro"]=pc.introPlaying;
   doc["pcAnimation"]=pc.customSlot;doc["animationSlot"]=activeCodeSlot;

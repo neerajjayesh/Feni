@@ -1,5 +1,14 @@
 # Changelog
 
+## 3.5.1
+
+- Add the supplied gaming controller and popcorn-eating overlays, with the
+  requested raised eye position during these animations and centered eyes otherwise.
+- Use Entertainment (slot 7) for popcorn; retain custom slots 2–8.
+- Add optional foreground window-title matching and default YouTube/VLC rules.
+  Browser use without a matching YouTube title keeps the normal rule behaviour.
+- Keep window titles local to Studio; only the chosen behaviour is sent to Feni.
+
 ## 3.5.0
 
 - Replace frame-file management with a C++ editor for each animation behaviour.
